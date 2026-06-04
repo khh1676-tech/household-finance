@@ -492,7 +492,6 @@ select:focus { outline: none; border-color: var(--ink); }
   <div class="hdr-right">
     <button class="btn google-btn btn-sm" onclick="doSignIn()" id="login-btn">🔑 로그인</button>
     <div class="sync-badge" id="sync-badge" style="display:none"><div class="sync-dot off" id="sync-dot"></div><span id="sync-txt">연결 중...</span></div>
-    <button class="btn btn-sm btn-primary" id="save-btn" style="display:none" onclick="saveMonth()">💾 저장</button>
     <button class="btn btn-sm" id="csv-btn" style="display:none" onclick="doExport()">📥 CSV</button>
   </div>
 </header>
@@ -560,15 +559,15 @@ select:focus { outline: none; border-color: var(--ink); }
     <div class="grid2">
       <div class="card">
         <div class="card-title" style="margin-bottom:12px">수입</div>
-        <div class="form-group"><label class="form-label">소영 월급</label><input class="form-input money-input" type="text" inputmode="numeric" id="f-inc-s" placeholder="0" oninput="previewInc()"></div>
-        <div class="form-group"><label class="form-label">환희 월급</label><input class="form-input money-input" type="text" inputmode="numeric" id="f-inc-h" placeholder="0" oninput="previewInc()"></div>
+        <div class="form-group"><label class="form-label">소영 월급</label><input class="form-input money-input" type="text" inputmode="numeric" id="f-inc-s" placeholder="0" oninput="previewInc();autoSave()"></div>
+        <div class="form-group"><label class="form-label">환희 월급</label><input class="form-input money-input" type="text" inputmode="numeric" id="f-inc-h" placeholder="0" oninput="previewInc();autoSave()"></div>
         <div class="inc-preview" id="inc-preview">합계: ₩0</div>
       </div>
       <div class="card">
         <div class="card-title" style="margin-bottom:12px">생활비 (용돈)</div>
-        <div class="form-group"><label class="form-label">소영 용돈</label><input class="form-input money-input" type="text" inputmode="numeric" id="f-liv-s" placeholder="0"></div>
-        <div class="form-group"><label class="form-label">환희 용돈</label><input class="form-input money-input" type="text" inputmode="numeric" id="f-liv-h" placeholder="0"></div>
-        <div class="form-group"><label class="form-label">공용비</label><input class="form-input money-input" type="text" inputmode="numeric" id="f-liv-c" placeholder="0"></div>
+        <div class="form-group"><label class="form-label">소영 용돈</label><input class="form-input money-input" type="text" inputmode="numeric" id="f-liv-s" placeholder="0" oninput="autoSave()"></div>
+        <div class="form-group"><label class="form-label">환희 용돈</label><input class="form-input money-input" type="text" inputmode="numeric" id="f-liv-h" placeholder="0" oninput="autoSave()"></div>
+        <div class="form-group"><label class="form-label">공용비</label><input class="form-input money-input" type="text" inputmode="numeric" id="f-liv-c" placeholder="0" oninput="autoSave()"></div>
       </div>
     </div>
 
@@ -582,7 +581,7 @@ select:focus { outline: none; border-color: var(--ink); }
     <div class="card">
       <div class="card-hdr">
         <div class="card-title">관리비 / 경조사비 / 여행비</div>
-        <button class="btn btn-sm btn-ghost" onclick="addVarRow()">+ 항목 추가</button>
+        <button class="btn btn-sm btn-ghost" onclick="addVarRow();setTimeout(autoSave,100)">+ 항목 추가</button>
       </div>
       <div style="display:grid;grid-template-columns:1fr 90px 120px 32px;gap:6px;margin-bottom:6px">
         <div style="font-size:10px;color:var(--text-l);padding:0 4px">항목 종류</div>
@@ -606,7 +605,7 @@ select:focus { outline: none; border-color: var(--ink); }
     <div class="card">
       <div class="card-hdr">
         <div class="card-title">적금 내역</div>
-        <button class="btn btn-sm btn-ghost" onclick="addSavRow()">+ 항목 추가</button>
+        <button class="btn btn-sm btn-ghost" onclick="addSavRow();setTimeout(autoSave,100)">+ 항목 추가</button>
       </div>
       <div style="display:grid;grid-template-columns:1fr 100px 120px 120px 32px;gap:6px;margin-bottom:6px">
         <div style="font-size:10px;color:var(--text-l);padding:0 4px">항목명</div>
@@ -625,7 +624,7 @@ select:focus { outline: none; border-color: var(--ink); }
     <div class="card">
       <div class="card-hdr">
         <div class="card-title">할부 내역</div>
-        <button class="btn btn-sm btn-ghost" onclick="addInstRow()">+ 항목 추가</button>
+        <button class="btn btn-sm btn-ghost" onclick="addInstRow();setTimeout(autoSave,100)">+ 항목 추가</button>
       </div>
       <div style="display:grid;grid-template-columns:1fr 100px 120px 32px;gap:6px;margin-bottom:6px">
         <div style="font-size:10px;color:var(--text-l);padding:0 4px">항목명</div>
@@ -643,7 +642,7 @@ select:focus { outline: none; border-color: var(--ink); }
     <div class="card">
       <div class="card-hdr">
         <div class="card-title">주식</div>
-        <button class="btn btn-sm btn-ghost" onclick="addStockRow()">+ 항목 추가</button>
+        <button class="btn btn-sm btn-ghost" onclick="addStockRow();setTimeout(autoSave,100)">+ 항목 추가</button>
       </div>
       <div style="display:grid;grid-template-columns:1fr 100px 130px 130px 32px;gap:6px;margin-bottom:6px">
         <div style="font-size:10px;color:var(--text-l);padding:0 4px">종목/계좌명</div>
@@ -675,8 +674,8 @@ select:focus { outline: none; border-color: var(--ink); }
     <div class="card">
       <div class="card-title" style="margin-bottom:12px">특이사항</div>
       <div class="grid2" style="margin-bottom:0">
-        <div class="form-group" style="margin:0"><label class="form-label">기타 지출</label><input class="form-input money-input" type="text" inputmode="numeric" id="f-misc" placeholder="0"></div>
-        <div class="form-group" style="margin:0"><label class="form-label">메모</label><input class="form-input" type="text" id="f-memo" placeholder="예) 가전 구매, 병원비..."></div>
+        <div class="form-group" style="margin:0"><label class="form-label">기타 지출</label><input class="form-input money-input" type="text" inputmode="numeric" id="f-misc" placeholder="0" oninput="autoSave()"></div>
+        <div class="form-group" style="margin:0"><label class="form-label">메모</label><input class="form-input" type="text" id="f-memo" placeholder="예) 가전 구매, 병원비..." oninput="autoSave()"></div>
       </div>
     </div>
   </div>
@@ -871,7 +870,6 @@ function showApp(){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('login-btn').style.display='none';
   document.getElementById('sync-badge').style.display='flex';
-  document.getElementById('save-btn').style.display='inline-flex';
   document.getElementById('csv-btn').style.display='inline-flex';
   goTab('dashboard');
 }
@@ -1285,6 +1283,16 @@ function loadMonth(){
   toast(d.incS?'기존 데이터 불러왔어!':'새 달이야. 입력해줘!');
 }
 
+let _autoSaveTimer = null;
+function autoSave(){
+  clearTimeout(_autoSaveTimer);
+  _autoSaveTimer = setTimeout(async () => {
+    await saveMonth();
+    syncStatus(true, '자동저장됨 ✓');
+    setTimeout(() => syncStatus(true, '공유 데이터 연동'), 2000);
+  }, 800);
+}
+
 async function saveMonth(){
   const key=document.getElementById('inp-sel').value;
   const savRows=[];
@@ -1339,17 +1347,17 @@ function addVarRow(type='관리비', who='소영', amt=0){
   div.className='var-row';
   div.style.cssText='display:grid;grid-template-columns:1fr 90px 120px 32px;gap:6px;margin-bottom:6px;align-items:center';
   div.innerHTML=`
-    <select class="form-input var-type" style="font-size:13px;padding:6px 10px" onchange="updateVarTotals()">
+    <select class="form-input var-type" onchange="updateVarTotals();autoSave()" style="font-size:13px;padding:6px 10px" onchange="updateVarTotals()">
       <option ${type==='관리비'?'selected':''}>관리비</option>
       <option ${type==='경조사비'?'selected':''}>경조사비</option>
       <option ${type==='여행비'?'selected':''}>여행비</option>
     </select>
-    <select class="set-who var-who" style="width:100%" onchange="updateVarTotals()">
+    <select class="set-who var-who" onchange="updateVarTotals();autoSave()" style="width:100%" onchange="updateVarTotals()">
       <option ${who==='소영'?'selected':''}>소영</option>
       <option ${who==='환희'?'selected':''}>환희</option>
     </select>
-    <input class="form-input money-input var-amt" type="text" inputmode="numeric" placeholder="0" value="${amt?parseInt(amt).toLocaleString('ko-KR'):''}" style="font-size:13px;padding:6px 10px;text-align:right" oninput="updateVarTotals()">
-    <button class="btn btn-ghost btn-danger" onclick="this.parentElement.remove();updateVarTotals()" style="padding:6px;font-size:14px">✕</button>`;
+    <input class="form-input money-input var-amt" type="text" inputmode="numeric" placeholder="0" value="${amt?parseInt(amt).toLocaleString('ko-KR'):''}" style="font-size:13px;padding:6px 10px;text-align:right" oninput="updateVarTotals();autoSave()">
+    <button class="btn btn-ghost btn-danger" onclick="this.parentElement.remove();updateVarTotals();autoSave()" style="padding:6px;font-size:14px">✕</button>`;
   wrap.appendChild(div);
   setTimeout(initMoneyInputs,10);
 }
@@ -1378,10 +1386,10 @@ function addSavRow(name='',who='소영',amt=0,total=0){
   div.style.cssText='display:grid;grid-template-columns:1fr 100px 120px 120px 32px;gap:6px;margin-bottom:6px;align-items:center';
   div.innerHTML=`
     <input class="form-input sav-name" type="text" placeholder="예) 내맘적금" value="${name}" style="font-size:13px;padding:6px 10px">
-    <select class="set-who sav-who" style="width:100%"><option ${who==='소영'?'selected':''}>소영</option><option ${who==='환희'?'selected':''}>환희</option><option ${who==='공용'?'selected':''}>공용</option></select>
-    <input class="form-input money-input sav-amt" type="text" inputmode="numeric" placeholder="이번 달" value="${amt?parseInt(amt).toLocaleString('ko-KR'):''}" style="font-size:13px;padding:6px 10px;text-align:right" oninput="updateSavTotal()">
+    <select class="set-who sav-who" onchange="autoSave()" style="width:100%"><option ${who==='소영'?'selected':''}>소영</option><option ${who==='환희'?'selected':''}>환희</option><option ${who==='공용'?'selected':''}>공용</option></select>
+    <input class="form-input money-input sav-amt" type="text" inputmode="numeric" placeholder="이번 달" value="${amt?parseInt(amt).toLocaleString('ko-KR'):''}" style="font-size:13px;padding:6px 10px;text-align:right" oninput="updateSavTotal();autoSave()">
     <input class="form-input money-input sav-total-amt" type="text" inputmode="numeric" placeholder="누적 총액" value="${total?parseInt(total).toLocaleString('ko-KR'):''}" style="font-size:13px;padding:6px 10px;text-align:right">
-    <button class="btn btn-ghost btn-danger" onclick="this.parentElement.remove();updateSavTotal()" style="padding:6px;font-size:14px">✕</button>`;
+    <button class="btn btn-ghost btn-danger" onclick="this.parentElement.remove();updateSavTotal();autoSave()" style="padding:6px;font-size:14px">✕</button>`;
   wrap.appendChild(div);
   setTimeout(initMoneyInputs,10);
 }
@@ -1400,9 +1408,9 @@ function addInstRow(name='',who='환희',amt=0){
   div.style.cssText='display:grid;grid-template-columns:1fr 100px 120px 32px;gap:6px;margin-bottom:6px;align-items:center';
   div.innerHTML=`
     <input class="form-input inst-name" type="text" placeholder="예) 자동차 할부" value="${name}" style="font-size:13px;padding:6px 10px">
-    <select class="set-who inst-who" style="width:100%"><option ${who==='소영'?'selected':''}>소영</option><option ${who==='환희'?'selected':''}>환희</option><option ${who==='공용'?'selected':''}>공용</option></select>
-    <input class="form-input money-input inst-amt" type="text" inputmode="numeric" placeholder="0" value="${amt?parseInt(amt).toLocaleString('ko-KR'):''}" style="font-size:13px;padding:6px 10px;text-align:right" oninput="updateInstTotal()">
-    <button class="btn btn-ghost btn-danger" onclick="this.parentElement.remove();updateInstTotal()" style="padding:6px;font-size:14px">✕</button>`;
+    <select class="set-who inst-who" onchange="autoSave()" style="width:100%"><option ${who==='소영'?'selected':''}>소영</option><option ${who==='환희'?'selected':''}>환희</option><option ${who==='공용'?'selected':''}>공용</option></select>
+    <input class="form-input money-input inst-amt" type="text" inputmode="numeric" placeholder="0" value="${amt?parseInt(amt).toLocaleString('ko-KR'):''}" style="font-size:13px;padding:6px 10px;text-align:right" oninput="updateInstTotal();autoSave()">
+    <button class="btn btn-ghost btn-danger" onclick="this.parentElement.remove();updateInstTotal();autoSave()" style="padding:6px;font-size:14px">✕</button>`;
   wrap.appendChild(div);
   setTimeout(initMoneyInputs,10);
 }
@@ -1421,10 +1429,10 @@ function addStockRow(name='',who='소영',invested=0,current=0){
   div.style.cssText='display:grid;grid-template-columns:1fr 100px 130px 130px 32px;gap:6px;margin-bottom:6px;align-items:center';
   div.innerHTML=`
     <input class="form-input stock-name" type="text" placeholder="예) 삼성전자" value="${name}" style="font-size:13px;padding:6px 10px">
-    <select class="set-who stock-who" style="width:100%"><option ${who==='소영'?'selected':''}>소영</option><option ${who==='환희'?'selected':''}>환희</option></select>
-    <input class="form-input money-input stock-inv" type="text" inputmode="numeric" placeholder="누적 총 투자금" value="${invested?parseInt(invested).toLocaleString('ko-KR'):''}" style="font-size:13px;padding:6px 10px;text-align:right" oninput="updateStockSummary()">
-    <input class="form-input money-input stock-cur" type="text" inputmode="numeric" placeholder="평가금액" value="${current?parseInt(current).toLocaleString('ko-KR'):''}" style="font-size:13px;padding:6px 10px;text-align:right" oninput="updateStockSummary()">
-    <button class="btn btn-ghost btn-danger" onclick="this.parentElement.remove();updateStockSummary()" style="padding:6px;font-size:14px">✕</button>`;
+    <select class="set-who stock-who" onchange="autoSave()" style="width:100%"><option ${who==='소영'?'selected':''}>소영</option><option ${who==='환희'?'selected':''}>환희</option></select>
+    <input class="form-input money-input stock-inv" type="text" inputmode="numeric" placeholder="누적 총 투자금" value="${invested?parseInt(invested).toLocaleString('ko-KR'):''}" style="font-size:13px;padding:6px 10px;text-align:right" oninput="updateStockSummary();autoSave()">
+    <input class="form-input money-input stock-cur" type="text" inputmode="numeric" placeholder="평가금액" value="${current?parseInt(current).toLocaleString('ko-KR'):''}" style="font-size:13px;padding:6px 10px;text-align:right" oninput="updateStockSummary();autoSave()">
+    <button class="btn btn-ghost btn-danger" onclick="this.parentElement.remove();updateStockSummary();autoSave()" style="padding:6px;font-size:14px">✕</button>`;
   wrap.appendChild(div);
   setTimeout(initMoneyInputs,10);
 }

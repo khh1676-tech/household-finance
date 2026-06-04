@@ -199,8 +199,7 @@ select{padding:5px 10px;border:0.5px solid var(--border);border-radius:7px;font-
     <div class="month-bar">
       <div class="month-bar-left">
         <span class="mlabel">입력 월</span>
-        <select id="inp-sel" onchange="syncMonth(this.value)"></select>
-        <button class="btn btn-sm btn-ghost" onclick="loadMonth()">불러오기</button>
+        <select id="inp-sel" onchange="syncMonth(this.value);loadMonth()"></select>
         <button class="btn btn-sm btn-ghost" onclick="goNow('input')">이번 달</button>
       </div>
       <button class="btn btn-primary" onclick="saveMonth()">💾 저장하기</button>
@@ -474,7 +473,7 @@ function goTab(name){
   if(name==='history') renderHistory();
   if(name==='assets') renderAssets();
   if(name==='settings') renderSettings();
-  if(name==='input'){renderInputPage();setTimeout(initMoneyInputs,50);}
+  if(name==='input'){renderInputPage();loadMonth();setTimeout(initMoneyInputs,50);}
 }
 
 /* ── 월 셀렉트 ── */

@@ -759,20 +759,9 @@ function renderAssets(){
   const d=userData[key]||{};
   const ad=assetData[key]||{cashRows:[]};
 
-  // 적금 누계 (해당 월까지)
-  const keys=Object.keys(userData).sort().filter(k=>k<=key);
-  const savAccum={};
-  keys.forEach(k=>{
-    const md=userData[k];
-    if(md.savRows) md.savRows.forEach(r=>{
-      if(!savAccum[r.name]) savAccum[r.name]={name:r.name,who:r.who,total:0};
-      savAccum[r.name].total+=(r.amt||0);
-    });
-  });
-
   // 주식 (해당 월 최신 평가금액)
   const stocks=d.stockRows||[];
-  let totalCash=0,totalStock=0,totalSav=0;
+  let totalCash=0,totalStock=0;
 
   // 현금
   const cashList=ad.cashRows||[];
@@ -791,14 +780,6 @@ function renderAssets(){
     }).join(''):
     '<div style="color:var(--text-l);font-size:13px;padding:8px 0">이 달 주식 데이터 없음</div>';
   document.getElementById('asset-stock-total').textContent=fmt(totalStock);
-
-  // 적금
-  const savList=Object.values(savAccum);
-  savList.forEach(r=>totalSav+=r.total);
-  document.getElementById('asset-sav-list').innerHTML=savList.length?
-    savList.map(r=>`<div class="asset-item"><span class="asset-name">${r.name} <span style="font-size:11px;color:var(--text-l)">${r.who||''}</span></span><span class="asset-amt">${fmt(r.total)}</span></div>`).join(''):
-    '<div style="color:var(--text-l);font-size:13px;padding:8px 0">이 달까지 적금 데이터 없음</div>';
-  document.getElementById('asset-sav-total').textContent=fmt(totalSav);
 
   const grandTotal=totalCash+totalStock;
   document.getElementById('asset-metrics').innerHTML=`

@@ -6,6 +6,7 @@
 <title>소영 & 환희 가계부</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 :root {
   --green: #1D9E75; --green-light: #E1F5EE; --green-dark: #0F6E56;
@@ -443,21 +444,21 @@ function showApp() {
 /* ── 구글 로그인 ── */
 function doSignIn() {
   if (CLIENT_ID === 'YOUR_CLIENT_ID_HERE') { useLocal(); return; }
-  const s = document.createElement('script');
-  s.src = 'https://accounts.google.com/gsi/client';
-  s.onload = () => {
-    const tc = google.accounts.oauth2.initTokenClient({
-      client_id: CLIENT_ID, scope: SCOPES,
-      callback: async resp => {
-        if (resp.error) { toast('로그인 실패: ' + resp.error); return; }
-        token = resp.access_token;
-        showApp();
-        await loadFromDrive();
-      }
-    });
-    tc.requestAccessToken();
-  };
-  document.head.appendChild(s);
+  if (typeof google === 'undefined' || !google.accounts) {
+    toast('구글 로그인 준비 중이에요. 잠시 후 다시 눌러줘!');
+    setTimeout(doSignIn, 1500);
+    return;
+  }
+  const tc = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID, scope: SCOPES,
+    callback: async resp => {
+      if (resp.error) { toast('로그인 실패: ' + resp.error); return; }
+      token = resp.access_token;
+      showApp();
+      await loadFromDrive();
+    }
+  });
+  tc.requestAccessToken();
 }
 
 function useLocal() {
@@ -813,7 +814,6 @@ function doExport() {
 /* ── 초기화 ── */
 window.addEventListener('load', () => {
   fillMonthSelects();
-  // 구글 연동 모드 — 로그인 화면 표시
 });
 </script>
 </body>

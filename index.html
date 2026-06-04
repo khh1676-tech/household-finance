@@ -492,17 +492,18 @@ select:focus { outline: none; border-color: var(--ink); }
   <div class="hdr-right">
     <button class="btn google-btn btn-sm" onclick="doSignIn()" id="login-btn">🔑 로그인</button>
     <div class="sync-badge" id="sync-badge" style="display:none"><div class="sync-dot off" id="sync-dot"></div><span id="sync-txt">연결 중...</span></div>
+    <button class="btn btn-sm btn-primary" id="save-btn" style="display:none" onclick="saveMonth()">💾 저장</button>
     <button class="btn btn-sm" id="csv-btn" style="display:none" onclick="doExport()">📥 CSV</button>
   </div>
 </header>
 
 <main class="main">
   <!-- 로그인 전 -->
-  <div id="login-screen" class="login-wrap">
+  <div id="login-screen" class="login-wrap" style="display:none">
     <div style="font-size:48px;margin-bottom:16px">🏠</div>
     <div style="font-size:22px;font-weight:600;margin-bottom:8px">소영 & 환희 가계부</div>
     <div style="font-size:13px;color:var(--text-m);line-height:1.8;margin-bottom:28px">구글 계정으로 로그인하면<br>모든 기기에서 같은 데이터를 볼 수 있어요.</div>
-    <button class="btn google-btn" onclick="doSignIn()">🔑 구글로 시작하기</button>
+    <button class="btn google-btn" onclick="doSignIn()" style="margin-bottom:12px">🔑 구글로 시작하기</button>
   </div>
 
   <!-- 대시보드 -->
@@ -513,7 +514,6 @@ select:focus { outline: none; border-color: var(--ink); }
         <select id="dash-sel" onchange="syncMonth(this.value);renderDash()"></select>
         <button class="btn btn-sm btn-ghost" onclick="goNow('dashboard')">이번 달</button>
       </div>
-      <button class="btn btn-sm" onclick="doExport()">📥 CSV 추출</button>
     </div>
     <div class="metrics" id="dash-metrics"></div>
 
@@ -555,7 +555,6 @@ select:focus { outline: none; border-color: var(--ink); }
         <select id="inp-sel" onchange="syncMonth(this.value);loadMonth()"></select>
         <button class="btn btn-sm btn-ghost" onclick="goNow('input')">이번 달</button>
       </div>
-      <button class="btn btn-primary" onclick="saveMonth()">💾 저장하기</button>
     </div>
 
     <div class="grid2">
@@ -686,7 +685,6 @@ select:focus { outline: none; border-color: var(--ink); }
   <div id="section-history" class="section">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <div style="font-size:18px;font-weight:600">누적 기록</div>
-      <button class="btn" onclick="doExport()">📥 CSV(엑셀) 추출</button>
     </div>
     <div class="card">
       <div class="card-title" style="margin-bottom:12px">월별 수입 / 지출</div>
@@ -781,9 +779,9 @@ select:focus { outline: none; border-color: var(--ink); }
 <script>
 const CLIENT_ID = '576383246761-ilp6ktsa7eqn75uacag09peihuvh6s05.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
-const DATA_FILE = 'hh_finance_v2.json';
-const FIXED_FILE = 'hh_fixed_v2.json';
-const ASSETS_FILE = 'hh_assets_v2.json';
+// Supabase 설정
+const SUPABASE_URL = 'https://smgjwkqjewizgrsgzqov.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_QaB_yMXlQnzTikKszf-32Q_MRjHabDs';
 
 const DEFAULT_FIXED = [
   {name:'인터넷',who:'환희',amtS:0,amtH:19000},
@@ -873,6 +871,7 @@ function showApp(){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('login-btn').style.display='none';
   document.getElementById('sync-badge').style.display='flex';
+  document.getElementById('save-btn').style.display='inline-flex';
   document.getElementById('csv-btn').style.display='inline-flex';
   goTab('dashboard');
 }
@@ -900,61 +899,72 @@ function useLocal(){
   try{const f=JSON.parse(localStorage.getItem('hh_fixed'));if(f)fixedItems=f;}catch{}
   try{assetData=JSON.parse(localStorage.getItem('hh_assets')||'{}');}catch{assetData={};}
   fillSelects(); showApp();
-  syncStatus(false,'로컬 저장 (구글 미연결)');
+  syncStatus(false,'연결 중...');
 }
 
-/* ── 드라이브 ── */
-async function gFetch(method,url,body){
-  const r=await fetch(url,{method,headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});
-  return r.json();
+/* ── Supabase API ── */
+async function sbFetch(method, path, body){
+  const r = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
+    method,
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': method === 'POST' ? 'resolution=merge-duplicates,return=minimal' : 'return=minimal'
+    },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if(method === 'GET') return r.json();
+  return r;
 }
-async function findFileId(name){
-  const r=await fetch(`https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name='${name}'&fields=files(id)`,{headers:{'Authorization':'Bearer '+token}});
-  const d=await r.json();
-  return d.files&&d.files[0]?d.files[0].id:null;
+
+async function sbGet(table, filter=''){
+  return sbFetch('GET', table + '?' + filter);
 }
-async function readFile(id){
-  const r=await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`,{headers:{'Authorization':'Bearer '+token}});
-  return r.json();
-}
-async function writeFile(id,name,content){
-  const body=JSON.stringify(content);
-  if(id){
-    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`,{method:'PATCH',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body});
-    return id;
-  }
-  const meta=await gFetch('POST','https://www.googleapis.com/drive/v3/files?fields=id',{name,parents:['appDataFolder']});
-  await fetch(`https://www.googleapis.com/upload/drive/v3/files/${meta.id}?uploadType=media`,{method:'PATCH',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body});
-  return meta.id;
+
+async function sbUpsert(table, data){
+  return sbFetch('POST', table, data);
 }
 async function loadFromDrive(){
   try{
-    dataFileId=await findFileId(DATA_FILE);
-    if(dataFileId){const d=await readFile(dataFileId);if(d&&typeof d==='object'&&!d.error)userData=d;}
-    fixedFileId=await findFileId(FIXED_FILE);
-    if(fixedFileId){const f=await readFile(fixedFileId);if(f&&Array.isArray(f))fixedItems=f;}
-    assetFileId=await findFileId(ASSETS_FILE);
-    if(assetFileId){const a=await readFile(assetFileId);if(a&&typeof a==='object'&&!a.error)assetData=a;}
+    // 월별 데이터 불러오기
+    const rows = await sbGet('monthly_data', 'select=month_key,data');
+    if(Array.isArray(rows)){
+      rows.forEach(r => { userData[r.month_key] = r.data; });
+    }
+    // 고정비 불러오기
+    const fixedRows = await sbGet('fixed_items', 'select=items&order=updated_at.desc&limit=1');
+    if(Array.isArray(fixedRows) && fixedRows.length > 0){
+      fixedItems = fixedRows[0].items;
+    }
+    // 자산 데이터 불러오기
+    const assetRows = await sbGet('asset_data', 'select=month_key,data');
+    if(Array.isArray(assetRows)){
+      assetRows.forEach(r => { assetData[r.month_key] = r.data; });
+    }
   }catch(e){toast('불러오기 오류: '+e.message);}
   finally{
     fillSelects(); renderDash();
-    syncStatus(true,'구글 드라이브 연동');
-    toast(dataFileId?'데이터 불러왔어! ✓':'안녕! 새로 시작할게 😊');
+    syncStatus(true,'공유 데이터 연동');
+    toast('데이터 불러왔어! ✓');
   }
 }
 async function saveToDrive(){
-  if(token==='local'){
-    localStorage.setItem('hh_data',JSON.stringify(userData));
-    localStorage.setItem('hh_fixed',JSON.stringify(fixedItems));
-    localStorage.setItem('hh_assets',JSON.stringify(assetData));
-    return;
-  }
   syncStatus(false,'저장 중...');
   try{
-    dataFileId=await writeFile(dataFileId,DATA_FILE,userData);
-    fixedFileId=await writeFile(fixedFileId,FIXED_FILE,fixedItems);
-    assetFileId=await writeFile(assetFileId,ASSETS_FILE,assetData);
-    syncStatus(true,'구글 드라이브 연동');
+    // 현재 달 데이터만 저장
+    const currentKey = document.getElementById('inp-sel') ? document.getElementById('inp-sel').value : null;
+    if(currentKey && userData[currentKey]){
+      await sbUpsert('monthly_data', {month_key: currentKey, data: userData[currentKey], updated_at: new Date().toISOString()});
+    }
+    // 고정비 저장
+    await sbUpsert('fixed_items', {id: '00000000-0000-0000-0000-000000000001', items: fixedItems, updated_at: new Date().toISOString()});
+    // 자산 저장
+    const assetKey = document.getElementById('asset-sel') ? document.getElementById('asset-sel').value : currentKey;
+    if(assetKey && assetData[assetKey]){
+      await sbUpsert('asset_data', {month_key: assetKey, data: assetData[assetKey], updated_at: new Date().toISOString()});
+    }
+    syncStatus(true,'공유 데이터 연동');
   }catch(e){syncStatus(false,'저장 실패');toast('저장 실패: '+e.message);}
 }
 
@@ -1587,7 +1597,8 @@ function doExport(){
 /* ── 초기화 ── */
 window.addEventListener('load',()=>{
   fillSelects();
-  if(CLIENT_ID==='YOUR_CLIENT_ID_HERE') useLocal();
+  showApp();
+  loadFromDrive();
 });
 </script>
 </body>

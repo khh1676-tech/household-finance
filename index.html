@@ -6,6 +6,7 @@
 <title>소영 & 환희 가계부</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 :root {
   --green:#1D9E75;--green-l:#E1F5EE;--green-d:#0F6E56;
@@ -522,31 +523,19 @@ function showApp(){
 /* ── 구글 로그인 ── */
 function doSignIn(){
   if(CLIENT_ID==='YOUR_CLIENT_ID_HERE'){useLocal();return;}
-  // 리디렉션 방식 - 사파리/웨일 등 모든 브라우저 호환
-  const params=new URLSearchParams({
-    client_id:CLIENT_ID,
-    redirect_uri:location.origin+location.pathname,
-    response_type:'token',
-    scope:SCOPES,
-    include_granted_scopes:'true',
-    state:'signin'
-  });
-  location.href='https://accounts.google.com/o/oauth2/v2/auth?'+params.toString();
-}
-
-function checkRedirectToken(){
-  // URL 해시에서 토큰 추출 (리디렉션 후)
-  const hash=location.hash.substring(1);
-  if(!hash) return false;
-  const params=new URLSearchParams(hash);
-  const accessToken=params.get('access_token');
-  if(!accessToken) return false;
-  // 해시 제거
-  history.replaceState(null,'',location.pathname);
-  token=accessToken;
-  showApp();
-  loadFromDrive();
-  return true;
+  if(typeof google==='undefined'||!google.accounts){
+    toast('잠시 후 다시 눌러줘!');
+    setTimeout(doSignIn,1500);return;
+  }
+  google.accounts.oauth2.initTokenClient({
+    client_id:CLIENT_ID,scope:SCOPES,
+    callback:async resp=>{
+      if(resp.error){toast('로그인 실패: '+resp.error);return;}
+      token=resp.access_token;
+      showApp();
+      await loadFromDrive();
+    }
+  }).requestAccessToken();
 }
 function useLocal(){
   token='local';
@@ -1209,12 +1198,7 @@ function doExport(){
 /* ── 초기화 ── */
 window.addEventListener('load',()=>{
   fillSelects();
-  if(CLIENT_ID==='YOUR_CLIENT_ID_HERE'){useLocal();return;}
-  // 리디렉션 후 토큰 체크
-  if(!checkRedirectToken()){
-    // 로그인 전 화면 표시
-    document.getElementById('login-screen').style.display='flex';
-  }
+  if(CLIENT_ID==='YOUR_CLIENT_ID_HERE') useLocal();
 });
 </script>
 </body>

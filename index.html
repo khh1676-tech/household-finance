@@ -155,7 +155,8 @@ select{padding:5px 10px;border:0.5px solid var(--border);border-radius:7px;font-
     <div class="month-bar">
       <div class="month-bar-left">
         <span class="mlabel">조회 월</span>
-        <select id="dash-sel" onchange="renderDash()"></select>
+        <select id="dash-sel" onchange="syncMonth(this.value);renderDash()"></select>
+        <button class="btn btn-sm btn-ghost" onclick="goNow('dashboard')">이번 달</button>
       </div>
       <button class="btn btn-sm" onclick="doExport()">📥 CSV 추출</button>
     </div>
@@ -198,8 +199,9 @@ select{padding:5px 10px;border:0.5px solid var(--border);border-radius:7px;font-
     <div class="month-bar">
       <div class="month-bar-left">
         <span class="mlabel">입력 월</span>
-        <select id="inp-sel"></select>
+        <select id="inp-sel" onchange="syncMonth(this.value)"></select>
         <button class="btn btn-sm btn-ghost" onclick="loadMonth()">불러오기</button>
+        <button class="btn btn-sm btn-ghost" onclick="goNow('input')">이번 달</button>
       </div>
       <button class="btn btn-primary" onclick="saveMonth()">💾 저장하기</button>
     </div>
@@ -343,11 +345,12 @@ select{padding:5px 10px;border:0.5px solid var(--border);border-radius:7px;font-
     <div class="month-bar" style="margin-bottom:16px">
       <div class="month-bar-left">
         <span class="mlabel">기준 월</span>
-        <select id="asset-sel" onchange="renderAssets()"></select>
+        <select id="asset-sel" onchange="syncMonth(this.value);renderAssets()"></select>
+        <button class="btn btn-sm btn-ghost" onclick="goNow('assets')">이번 달</button>
       </div>
     </div>
     <!-- 총 자산 요약 -->
-    <div class="metrics" id="asset-metrics"></div>
+    <div class="metrics" id="asset-metrics" style="grid-template-columns:repeat(3,1fr)"></div>
     <div class="grid2">
       <div class="card">
         <div class="card-title" style="margin-bottom:12px">💰 현금 / 통장</div>
@@ -458,6 +461,12 @@ function goTab(name){
     const s=document.getElementById('section-'+t);
     if(s) s.classList.toggle('on',t===name);
   });
+  // 현재 활성 탭의 월을 다른 셀렉트에 동기화
+  const activeSel=name==='dashboard'?'dash-sel':name==='input'?'inp-sel':name==='assets'?'asset-sel':null;
+  if(activeSel){
+    const currentKey=document.getElementById(activeSel).value;
+    if(currentKey) syncMonth(currentKey);
+  }
   if(name==='dashboard') renderDash();
   if(name==='history') renderHistory();
   if(name==='assets') renderAssets();
@@ -466,6 +475,10 @@ function goTab(name){
 }
 
 /* ── 월 셀렉트 ── */
+function nowKey(){
+  const now=new Date();
+  return mKey(now.getFullYear(),now.getMonth()+1);
+}
 function fillSelects(){
   const now=new Date();
   document.querySelectorAll('#dash-sel,#inp-sel,#asset-sel').forEach(sel=>{
@@ -480,6 +493,18 @@ function fillSelects(){
       }
     }
   });
+}
+function syncMonth(key){
+  document.querySelectorAll('#dash-sel,#inp-sel,#asset-sel').forEach(sel=>{
+    sel.value=key;
+  });
+}
+function goNow(tab){
+  const key=nowKey();
+  syncMonth(key);
+  if(tab==='dashboard') renderDash();
+  else if(tab==='input') loadMonth();
+  else if(tab==='assets') renderAssets();
 }
 
 /* ── 앱 표시 ── */
@@ -750,7 +775,7 @@ function renderAssets(){
   const cashList=ad.cashRows||[];
   cashList.forEach(r=>totalCash+=(r.amt||0));
   document.getElementById('asset-cash-list').innerHTML=cashList.length?
-    cashList.map(r=>`<div class="asset-item"><span class="asset-name">${r.name}</span><span class="asset-amt">${fmt(r.amt)}</span></div>`).join(''):
+    cashList.map((r,i)=>`<div class="asset-item"><span class="asset-name">${r.name}</span><div style="display:flex;align-items:center;gap:8px"><span class="asset-amt">${fmt(r.amt)}</span><button class="btn btn-ghost btn-danger btn-sm" onclick="deleteCashItem('${key}',${i})" style="padding:3px 6px;font-size:12px">삭제</button></div></div>`).join(''):
     '<div style="color:var(--text-l);font-size:13px;padding:8px 0">아래에서 통장 잔액을 입력해줘!</div>';
   document.getElementById('asset-cash-total').textContent=fmt(totalCash);
 
@@ -1105,6 +1130,16 @@ function initMoneyInputs(){
       this.value=raw?parseInt(raw).toLocaleString('ko-KR'):'';
     });
   });
+}
+
+
+/* ── 현금 항목 삭제 ── */
+async function deleteCashItem(key, idx){
+  if(!assetData[key]||!assetData[key].cashRows) return;
+  assetData[key].cashRows.splice(idx,1);
+  await saveToDrive();
+  renderAssets();
+  toast('삭제됐어!');
 }
 
 /* ── CSV 추출 ── */

@@ -477,6 +477,12 @@ select:focus { outline: none; border-color: var(--ink); }
   .donut-layout { flex-direction: column; }
   .donut-box { width: 100px; height: 100px; }
 }
+
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(255,56,92,0.6); }
+  70%  { box-shadow: 0 0 0 8px rgba(255,56,92,0); }
+  100% { box-shadow: 0 0 0 0 rgba(255,56,92,0); }
+}
 </style>
 </head>
 <body>
@@ -492,6 +498,7 @@ select:focus { outline: none; border-color: var(--ink); }
   <div class="hdr-right">
     <button class="btn google-btn btn-sm" onclick="doSignIn()" id="login-btn">🔑 로그인</button>
     <div class="sync-badge" id="sync-badge" style="display:none"><div class="sync-dot off" id="sync-dot"></div><span id="sync-txt">연결 중...</span></div>
+    <button class="btn btn-sm btn-primary" id="save-btn" style="display:none;font-weight:600" onclick="saveMonth()">💾 저장</button>
     <button class="btn btn-sm" id="csv-btn" style="display:none" onclick="doExport()">📥 CSV</button>
   </div>
 </header>
@@ -870,6 +877,7 @@ function showApp(){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('login-btn').style.display='none';
   document.getElementById('sync-badge').style.display='flex';
+  document.getElementById('save-btn').style.display='inline-flex';
   document.getElementById('csv-btn').style.display='inline-flex';
   goTab('dashboard');
 }
@@ -1266,7 +1274,6 @@ function moneyVal(id){
 }
 
 function loadMonth(){
-  _autoSaveLocked = true; // 불러오는 동안 자동저장 막기
   const key=document.getElementById('inp-sel').value;
   const d=userData[key]||{};
   const setMoney=(id,v)=>{
@@ -1298,19 +1305,29 @@ function loadMonth(){
   toast(d.incS?'기존 데이터 불러왔어!':'새 달이야. 입력해줘!');
 }
 
-let _autoSaveTimer = null;
-let _autoSaveLocked = false;
-
-function autoSave(){
-  if(_autoSaveLocked) return; // 월 전환 중엔 저장 안 함
-  clearTimeout(_autoSaveTimer);
-  _autoSaveTimer = setTimeout(async () => {
-    if(_autoSaveLocked) return;
-    await saveMonth();
-    syncStatus(true, '자동저장됨 ✓');
-    setTimeout(() => syncStatus(true, '공유 데이터 연동'), 2000);
-  }, 1000);
+// 미저장 상태 표시
+function markUnsaved(){
+  const btn = document.getElementById('save-btn');
+  if(!btn) return;
+  btn.style.background = '#ff385c';
+  btn.style.borderColor = '#ff385c';
+  btn.style.animation = 'pulse 1.5s infinite';
+  btn.textContent = '💾 저장 필요!';
 }
+function markSaved(){
+  const btn = document.getElementById('save-btn');
+  if(!btn) return;
+  btn.style.background = '#008a05';
+  btn.style.borderColor = '#008a05';
+  btn.style.animation = 'none';
+  btn.textContent = '💾 저장됨 ✓';
+  setTimeout(()=>{
+    btn.style.background = '';
+    btn.style.borderColor = '';
+    btn.textContent = '💾 저장';
+  }, 2000);
+}
+function autoSave(){ markUnsaved(); }
 
 async function saveMonth(){
   const key=document.getElementById('inp-sel').value;
@@ -1355,6 +1372,7 @@ async function saveMonth(){
     memo:document.getElementById('f-memo').value
   };
   await saveToDrive('monthly');
+  markSaved();
   toast('저장됐어! ✓');
 }
 

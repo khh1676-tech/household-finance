@@ -291,7 +291,7 @@ select{padding:5px 10px;border:0.5px solid var(--border);border-radius:7px;font-
       <div style="display:grid;grid-template-columns:1fr 100px 130px 130px 32px;gap:6px;margin-bottom:6px">
         <div style="font-size:10px;color:var(--text-l);padding:0 4px">종목/계좌명</div>
         <div style="font-size:10px;color:var(--text-l);text-align:center">투자자</div>
-        <div style="font-size:10px;color:var(--text-l);text-align:right;padding:0 4px">이번 달 투자금</div>
+        <div style="font-size:10px;color:var(--text-l);text-align:right;padding:0 4px">누적 총 투자금</div>
         <div style="font-size:10px;color:var(--text-l);text-align:right;padding:0 4px">현재 평가금액</div>
         <div></div>
       </div>
@@ -299,7 +299,7 @@ select{padding:5px 10px;border:0.5px solid var(--border);border-radius:7px;font-
       <div id="stock-summary" style="display:none;margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border)">
         <div class="grid3" style="margin:0">
           <div style="text-align:center;padding:8px;background:var(--bg);border-radius:7px">
-            <div style="font-size:10px;color:var(--text-m);margin-bottom:3px">총 투자금</div>
+            <div style="font-size:10px;color:var(--text-m);margin-bottom:3px">누적 총 투자금</div>
             <div style="font-size:14px;font-weight:600" id="stk-inv">₩0</div>
           </div>
           <div style="text-align:center;padding:8px;background:var(--bg);border-radius:7px">
@@ -605,12 +605,12 @@ function calcMonth(d){
   const remain=totalInc-totalExp;
   const rate=totalInc?Math.round(remain/totalInc*100):0;
 
+  // 할부만 차감 (적금/주식은 공용통장 입금 후 분배)
   const instS=d.instRows?d.instRows.filter(r=>r.who==='소영').reduce((s,r)=>s+(r.amt||0),0):0;
   const instH=d.instRows?d.instRows.filter(r=>r.who==='환희').reduce((s,r)=>s+(r.amt||0),0):0;
-  const savS=d.savRows?d.savRows.filter(r=>r.who==='소영').reduce((s,r)=>s+(r.amt||0),0):0;
-  const savH=d.savRows?d.savRows.filter(r=>r.who==='환희').reduce((s,r)=>s+(r.amt||0),0):0;
-  const transferS=incS-(fixedS+livS+manageS+ceremonyS+travelS+instS+savS);
-  const transferH=incH-(fixedH+livH+manageH+ceremonyH+travelH+instH+savH);
+  // 소영: 용돈+공용비 차감 / 환희: 용돈만 차감
+  const transferS=incS-(fixedS+livS+livC+manageS+ceremonyS+travelS+instS);
+  const transferH=incH-(fixedH+livH+manageH+ceremonyH+travelH+instH);
 
   return{fixed,fixedS,fixedH,living,manage,ceremony,travel,savTotal,instTotal,totalInc,totalExp,remain,rate,transferS,transferH,incS,incH};
 }
@@ -1019,7 +1019,7 @@ function addStockRow(name='',who='소영',invested=0,current=0){
   div.innerHTML=`
     <input class="form-input stock-name" type="text" placeholder="예) 삼성전자" value="${name}" style="font-size:13px;padding:6px 10px">
     <select class="set-who stock-who" style="width:100%"><option ${who==='소영'?'selected':''}>소영</option><option ${who==='환희'?'selected':''}>환희</option></select>
-    <input class="form-input money-input stock-inv" type="text" inputmode="numeric" placeholder="투자금" value="${invested?parseInt(invested).toLocaleString('ko-KR'):''}" style="font-size:13px;padding:6px 10px;text-align:right" oninput="updateStockSummary()">
+    <input class="form-input money-input stock-inv" type="text" inputmode="numeric" placeholder="누적 총 투자금" value="${invested?parseInt(invested).toLocaleString('ko-KR'):''}" style="font-size:13px;padding:6px 10px;text-align:right" oninput="updateStockSummary()">
     <input class="form-input money-input stock-cur" type="text" inputmode="numeric" placeholder="평가금액" value="${current?parseInt(current).toLocaleString('ko-KR'):''}" style="font-size:13px;padding:6px 10px;text-align:right" oninput="updateStockSummary()">
     <button class="btn btn-ghost btn-danger" onclick="this.parentElement.remove();updateStockSummary()" style="padding:6px;font-size:14px">✕</button>`;
   wrap.appendChild(div);

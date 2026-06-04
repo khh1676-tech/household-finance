@@ -518,28 +518,24 @@ async function writeDriveFile(id, name, content) {
 }
 
 async function loadFromDrive() {
-  syncStatus(false, '불러오는 중...');
   try {
     dataFileId = await findFileId(DATA_FILE);
     if (dataFileId) {
       const d = await readDriveFile(dataFileId);
-      if (d && typeof d === 'object') userData = d;
+      if (d && typeof d === 'object' && !d.error) userData = d;
     }
     fixedFileId = await findFileId(FIXED_FILE);
     if (fixedFileId) {
       const f = await readDriveFile(fixedFileId);
       if (f && Array.isArray(f)) fixedItems = f;
     }
+  } catch (e) {
+    toast('드라이브 오류: ' + e.message);
+  } finally {
     fillMonthSelects();
     renderDash();
     syncStatus(true, '구글 드라이브 연동');
-    if (dataFileId) toast('데이터 불러왔어! ✓');
-    else toast('안녕! 새로 시작할게 😊');
-  } catch (e) {
-    syncStatus(false, '연동 오류');
-    toast('오류: ' + e.message);
-    fillMonthSelects();
-    renderDash();
+    toast(dataFileId ? '데이터 불러왔어! ✓' : '안녕! 새로 시작할게 😊');
   }
 }
 

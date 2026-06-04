@@ -132,8 +132,7 @@ select{padding:5px 10px;border:0.5px solid var(--border);border-radius:7px;font-
     <button class="nav-btn" id="tab-input" onclick="goTab('input')">✏️ <span class="nav-txt">월별 입력</span></button>
     <button class="nav-btn" id="tab-history" onclick="goTab('history')">📅 <span class="nav-txt">히스토리</span></button>
     <button class="nav-btn" id="tab-assets" onclick="goTab('assets')">🏦 <span class="nav-txt">자산현황</span></button>
-    <button class="nav-btn" id="tab-ceremony" onclick="goTab('ceremony')">🎁 <span class="nav-txt">경조사비</span></button>
-    <button class="nav-btn" id="tab-settings" onclick="goTab('settings')">⚙️ <span class="nav-txt">고정비 설정</span></button>
+<button class="nav-btn" id="tab-settings" onclick="goTab('settings')">⚙️ <span class="nav-txt">고정비 설정</span></button>
   </nav>
   <div class="hdr-right">
     <button class="btn google-btn btn-sm" onclick="doSignIn()" id="login-btn">🔑 로그인</button>
@@ -245,6 +244,10 @@ select{padding:5px 10px;border:0.5px solid var(--border);border-radius:7px;font-
         <div style="font-size:12px;color:var(--text-m)">관리비: <span id="var-manage-total" style="font-weight:600;color:var(--text)">₩0</span></div>
         <div style="font-size:12px;color:var(--text-m)">경조사비: <span id="var-ceremony-total" style="font-weight:600;color:var(--text)">₩0</span></div>
         <div style="font-size:12px;color:var(--text-m)">여행비: <span id="var-travel-total" style="font-weight:600;color:var(--text)">₩0</span></div>
+      </div>
+      <div style="margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border)">
+        <label class="form-label">경조사비 메모</label>
+        <input class="form-input" type="text" id="f-ceremony-memo" placeholder="예) 철수 결혼식 10만, 장례식 5만...">
       </div>
     </div>
 
@@ -381,88 +384,6 @@ select{padding:5px 10px;border:0.5px solid var(--border);border-radius:7px;font-
       <div style="text-align:right;margin-top:8px"><button class="btn btn-primary btn-sm" onclick="saveAssets()">저장</button></div>
     </div>
   </div>
-
-
-  <!-- 경조사비 -->
-  <div id="section-ceremony" class="section">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <div style="font-size:18px;font-weight:600">경조사비 기록</div>
-      <button class="btn btn-primary" onclick="addCeremonyItem()">+ 추가하기</button>
-    </div>
-
-    <!-- 요약 카드 -->
-    <div class="metrics" id="ceremony-metrics" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px"></div>
-
-    <!-- 필터 -->
-    <div class="month-bar" style="margin-bottom:16px">
-      <div class="month-bar-left" style="gap:8px;flex-wrap:wrap">
-        <span class="mlabel">종류</span>
-        <select id="ceremony-filter-type" onchange="renderCeremony()" style="font-size:12px">
-          <option value="전체">전체</option>
-          <option value="결혼식">결혼식</option>
-          <option value="장례식">장례식</option>
-          <option value="생일">생일</option>
-          <option value="명절">명절</option>
-          <option value="기타">기타</option>
-        </select>
-        <span class="mlabel">납입자</span>
-        <select id="ceremony-filter-who" onchange="renderCeremony()" style="font-size:12px">
-          <option value="전체">전체</option>
-          <option value="소영">소영</option>
-          <option value="환희">환희</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="card">
-      <div style="display:grid;grid-template-columns:1fr 80px 90px 80px 60px;gap:8px;padding-bottom:8px;border-bottom:0.5px solid var(--border);margin-bottom:4px">
-        <div style="font-size:10px;color:var(--text-l);font-weight:600;letter-spacing:.4px">이름</div>
-        <div style="font-size:10px;color:var(--text-l);font-weight:600;letter-spacing:.4px">종류</div>
-        <div style="font-size:10px;color:var(--text-l);font-weight:600;letter-spacing:.4px;text-align:right">금액</div>
-        <div style="font-size:10px;color:var(--text-l);font-weight:600;letter-spacing:.4px;text-align:center">납입자</div>
-        <div></div>
-      </div>
-      <div id="ceremony-list"></div>
-    </div>
-
-    <!-- 추가 폼 -->
-    <div class="card" id="ceremony-form" style="display:none;border:1.5px solid var(--green);background:var(--green-l)">
-      <div style="font-size:13px;font-weight:600;color:var(--green-d);margin-bottom:12px">새 경조사비 추가</div>
-      <div class="grid2" style="margin-bottom:8px">
-        <div class="form-group" style="margin:0">
-          <label class="form-label">이름</label>
-          <input class="form-input" type="text" id="cer-name" placeholder="예) 김철수 결혼식">
-        </div>
-        <div class="form-group" style="margin:0">
-          <label class="form-label">종류</label>
-          <select class="form-input" id="cer-type" style="padding:8px 11px">
-            <option>결혼식</option>
-            <option>장례식</option>
-            <option>생일</option>
-            <option>명절</option>
-            <option>기타</option>
-          </select>
-        </div>
-      </div>
-      <div class="grid2" style="margin-bottom:12px">
-        <div class="form-group" style="margin:0">
-          <label class="form-label">금액</label>
-          <input class="form-input money-input" type="text" inputmode="numeric" id="cer-amt" placeholder="0">
-        </div>
-        <div class="form-group" style="margin:0">
-          <label class="form-label">납입자</label>
-          <select class="form-input" id="cer-who" style="padding:8px 11px">
-            <option>소영</option>
-            <option>환희</option>
-          </select>
-        </div>
-      </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end">
-        <button class="btn btn-ghost" onclick="closeCeremonyForm()">취소</button>
-        <button class="btn btn-primary" onclick="saveCeremonyItem()">저장</button>
-      </div>
-    </div>
-  </div>
   <!-- 고정비 설정 -->
   <div id="section-settings" class="section">
     <div style="font-size:18px;font-weight:600;margin-bottom:16px">고정비 설정</div>
@@ -505,7 +426,6 @@ const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
 const DATA_FILE = 'hh_finance_v2.json';
 const FIXED_FILE = 'hh_fixed_v2.json';
 const ASSETS_FILE = 'hh_assets_v2.json';
-const CEREMONY_FILE = 'hh_ceremony_v1.json';
 
 const DEFAULT_FIXED = [
   {name:'인터넷',who:'환희',amtS:0,amtH:19000},
@@ -517,8 +437,8 @@ const DEFAULT_FIXED = [
   {name:'후원 (샘샘이)',who:'소영',amtS:45000,amtH:0}
 ];
 
-let token=null, userData={}, fixedItems=[...DEFAULT_FIXED], assetData={}, ceremonyData=[];
-let dataFileId=null, fixedFileId=null, assetFileId=null, ceremonyFileId=null;
+let token=null, userData={}, fixedItems=[...DEFAULT_FIXED], assetData={};
+let dataFileId=null, fixedFileId=null, assetFileId=null;
 let pieChart=null, lineChart=null, barChart=null;
 
 const fmt = n => '₩'+Math.round(n||0).toLocaleString('ko-KR');
@@ -539,7 +459,7 @@ function syncStatus(ok,txt){
 
 /* ── 탭 ── */
 function goTab(name){
-  ['dashboard','input','history','assets','ceremony','settings'].forEach(t=>{
+  ['dashboard','input','history','assets','settings'].forEach(t=>{
     document.getElementById('tab-'+t).classList.toggle('on',t===name);
     const s=document.getElementById('section-'+t);
     if(s) s.classList.toggle('on',t===name);
@@ -554,7 +474,6 @@ function goTab(name){
   if(name==='history') renderHistory();
   if(name==='assets') renderAssets();
   if(name==='settings') renderSettings();
-  if(name==='ceremony') renderCeremony();
   if(name==='input'){renderInputPage();setTimeout(initMoneyInputs,50);}
 }
 
@@ -622,7 +541,6 @@ function useLocal(){
   try{userData=JSON.parse(localStorage.getItem('hh_data')||'{}');}catch{userData={};}
   try{const f=JSON.parse(localStorage.getItem('hh_fixed'));if(f)fixedItems=f;}catch{}
   try{assetData=JSON.parse(localStorage.getItem('hh_assets')||'{}');}catch{assetData={};}
-  try{const c=JSON.parse(localStorage.getItem('hh_ceremony'));if(c&&Array.isArray(c))ceremonyData=c;}catch{}
   fillSelects(); showApp();
   syncStatus(false,'로컬 저장 (구글 미연결)');
 }
@@ -659,8 +577,6 @@ async function loadFromDrive(){
     if(fixedFileId){const f=await readFile(fixedFileId);if(f&&Array.isArray(f))fixedItems=f;}
     assetFileId=await findFileId(ASSETS_FILE);
     if(assetFileId){const a=await readFile(assetFileId);if(a&&typeof a==='object'&&!a.error)assetData=a;}
-    ceremonyFileId=await findFileId(CEREMONY_FILE);
-    if(ceremonyFileId){const c=await readFile(ceremonyFileId);if(c&&Array.isArray(c))ceremonyData=c;}
   }catch(e){toast('불러오기 오류: '+e.message);}
   finally{
     fillSelects(); renderDash();
@@ -673,7 +589,6 @@ async function saveToDrive(){
     localStorage.setItem('hh_data',JSON.stringify(userData));
     localStorage.setItem('hh_fixed',JSON.stringify(fixedItems));
     localStorage.setItem('hh_assets',JSON.stringify(assetData));
-    localStorage.setItem('hh_ceremony',JSON.stringify(ceremonyData));
     return;
   }
   syncStatus(false,'저장 중...');
@@ -681,7 +596,6 @@ async function saveToDrive(){
     dataFileId=await writeFile(dataFileId,DATA_FILE,userData);
     fixedFileId=await writeFile(fixedFileId,FIXED_FILE,fixedItems);
     assetFileId=await writeFile(assetFileId,ASSETS_FILE,assetData);
-    ceremonyFileId=await writeFile(ceremonyFileId,CEREMONY_FILE,ceremonyData);
     syncStatus(true,'구글 드라이브 연동');
   }catch(e){syncStatus(false,'저장 실패');toast('저장 실패: '+e.message);}
 }
@@ -888,9 +802,21 @@ function renderAssets(){
 
   const grandTotal=totalCash+totalStock;
   document.getElementById('asset-metrics').innerHTML=`
-    <div class="met"><div class="met-l">총 자산</div><div class="met-v g">${fmt(grandTotal)}</div></div>
-    <div class="met"><div class="met-l">현금/통장</div><div class="met-v b">${fmt(totalCash)}</div></div>
-    <div class="met"><div class="met-l">주식 평가</div><div class="met-v ${totalStock>0?'g':''}">${fmt(totalStock)}</div></div>`;
+    <div class="met" style="border:1.5px solid var(--green);background:var(--green-l)">
+      <div class="met-l" style="color:var(--green-d)">💰 총 자산</div>
+      <div class="met-v g" style="font-size:22px">${fmt(grandTotal)}</div>
+      <div class="met-s" style="color:var(--green-d)">현금+주식 합산</div>
+    </div>
+    <div class="met">
+      <div class="met-l">🏦 현금 / 통장</div>
+      <div class="met-v b">${fmt(totalCash)}</div>
+      <div class="met-s">${cashList.length}개 통장</div>
+    </div>
+    <div class="met">
+      <div class="met-l">📈 주식 평가금액</div>
+      <div class="met-v ${totalStock>0?'g':''}">${fmt(totalStock)}</div>
+      <div class="met-s">${stocks.filter(r=>r.current>0).length}개 종목</div>
+    </div>`;
 
   // 현금 입력 행
   renderCashRows(key);
@@ -973,7 +899,7 @@ function loadMonth(){
   if(d.varRows&&d.varRows.length) d.varRows.forEach(r=>addVarRow(r.type,r.who,r.amt));
   else addVarRow();
   updateVarTotals();
-  setMoney('f-misc',d.misc);setTxt('f-memo',d.memo);
+  setMoney('f-misc',d.misc);setTxt('f-ceremony-memo',d.ceremonyMemo);setTxt('f-memo',d.memo);
   document.getElementById('sav-rows').innerHTML='';
   if(d.savRows&&d.savRows.length) d.savRows.forEach(r=>addSavRow(r.name,r.who,r.amt,r.total));
   else addSavRow();
@@ -1028,6 +954,7 @@ async function saveMonth(){
     livS:moneyVal('f-liv-s'),livH:moneyVal('f-liv-h'),livC:moneyVal('f-liv-c'),
     varRows,savRows,instRows,stockRows,
     misc:moneyVal('f-misc'),
+    ceremonyMemo:document.getElementById('f-ceremony-memo').value,
     memo:document.getElementById('f-memo').value
   };
   await saveToDrive();
@@ -1222,75 +1149,6 @@ function initMoneyInputs(){
 }
 
 
-
-/* ── 경조사비 ── */
-const TYPE_COLORS = {'결혼식':'#D4537E','장례식':'#888780','생일':'#534AB7','명절':'#BA7517','기타':'#378ADD'};
-
-function renderCeremony(){
-  const filterType=document.getElementById('ceremony-filter-type').value;
-  const filterWho=document.getElementById('ceremony-filter-who').value;
-
-  let list=ceremonyData.slice().reverse();
-  if(filterType!=='전체') list=list.filter(r=>r.type===filterType);
-  if(filterWho!=='전체') list=list.filter(r=>r.who===filterWho);
-
-  // 요약
-  const totalS=ceremonyData.filter(r=>r.who==='소영').reduce((s,r)=>s+(r.amt||0),0);
-  const totalH=ceremonyData.filter(r=>r.who==='환희').reduce((s,r)=>s+(r.amt||0),0);
-  document.getElementById('ceremony-metrics').innerHTML=`
-    <div class="met"><div class="met-l">전체 합계</div><div class="met-v">${fmt(totalS+totalH)}</div><div class="met-s">총 ${ceremonyData.length}건</div></div>
-    <div class="met"><div class="met-l">소영</div><div class="met-v" style="color:var(--pink)">${fmt(totalS)}</div></div>
-    <div class="met"><div class="met-l">환희</div><div class="met-v" style="color:var(--blue-d)">${fmt(totalH)}</div></div>`;
-
-  // 목록
-  const wrap=document.getElementById('ceremony-list');
-  if(!list.length){
-    wrap.innerHTML='<div class="empty" style="padding:24px">아직 기록이 없어요!</div>';
-    return;
-  }
-  wrap.innerHTML=list.map((r,i)=>{
-    const realIdx=ceremonyData.length-1-ceremonyData.slice().reverse().indexOf(r);
-    const color=TYPE_COLORS[r.type]||'#888780';
-    return`<div style="display:grid;grid-template-columns:1fr 80px 90px 80px 60px;gap:8px;padding:10px 0;border-bottom:0.5px solid var(--border);align-items:center">
-      <span style="font-size:13px;font-weight:500">${r.name}</span>
-      <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:${color}22;color:${color}">${r.type}</span>
-      <span style="font-size:13px;font-weight:600;text-align:right">${fmt(r.amt)}</span>
-      <span style="text-align:center"><span class="badge ${r.who==='소영'?'badge-r':'badge-b'}">${r.who}</span></span>
-      <button class="btn btn-ghost btn-danger btn-sm" onclick="deleteCeremony(${realIdx})" style="padding:4px 8px;font-size:12px">삭제</button>
-    </div>`;
-  }).join('');
-}
-
-function addCeremonyItem(){
-  document.getElementById('ceremony-form').style.display='block';
-  document.getElementById('ceremony-form').scrollIntoView({behavior:'smooth'});
-  setTimeout(initMoneyInputs,50);
-}
-function closeCeremonyForm(){
-  document.getElementById('ceremony-form').style.display='none';
-  document.getElementById('cer-name').value='';
-  document.getElementById('cer-amt').value='';
-}
-async function saveCeremonyItem(){
-  const name=document.getElementById('cer-name').value.trim();
-  const type=document.getElementById('cer-type').value;
-  const amt=parseInt((document.getElementById('cer-amt').value||'').replace(/[^0-9]/g,''))||0;
-  const who=document.getElementById('cer-who').value;
-  if(!name){toast('이름을 입력해줘!');return;}
-  if(!amt){toast('금액을 입력해줘!');return;}
-  ceremonyData.push({name,type,amt,who});
-  await saveToDrive();
-  closeCeremonyForm();
-  renderCeremony();
-  toast('저장됐어! ✓');
-}
-async function deleteCeremony(idx){
-  if(!confirm('이 항목을 삭제할까요?')) return;
-  ceremonyData.splice(idx,1);
-  await saveToDrive();
-  renderCeremony();
-  toast('삭제됐어!');
-}
 
 /* ── 현금 항목 삭제 ── */
 async function deleteCashItem(key, idx){

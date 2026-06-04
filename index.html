@@ -198,7 +198,9 @@ select {
     <button class="nav-btn" id="tab-settings" onclick="goTab('settings')">⚙️ <span class="nav-text">고정비 설정</span></button>
   </nav>
   <div class="header-right" id="hdr-right">
-    <button class="btn google-btn" onclick="doSignIn()">🔑 구글 로그인</button>
+    <button class="btn google-btn" onclick="doSignIn()" id="login-btn">🔑 구글 로그인</button>
+    <div class="sync-badge" id="sync-badge" style="display:none"><div class="sync-dot off" id="sync-dot"></div><span id="sync-txt">연결 중...</span></div>
+    <button class="btn btn-sm" id="csv-btn" style="display:none" onclick="doExport()">📥 CSV 추출</button>
   </div>
 </header>
 
@@ -220,7 +222,6 @@ select {
         <select id="dash-sel" onchange="renderDash()"></select>
       </div>
       <div class="month-bar-right">
-        <div class="sync-badge"><div class="sync-dot off" id="sync-dot"></div><span id="sync-txt">연결 중...</span></div>
         <button class="btn btn-sm" onclick="doExport()">📥 CSV 추출</button>
       </div>
     </div>
@@ -433,11 +434,9 @@ function fillMonthSelects() {
 /* ── 앱 표시 ── */
 function showApp() {
   document.getElementById('login-screen').style.display = 'none';
-  if (token && token !== 'local') {
-    document.getElementById('hdr-right').innerHTML =
-      '<div class="sync-badge"><div class="sync-dot off" id="sync-dot"></div><span id="sync-txt">연결 중...</span></div>' +
-      '<button class="btn btn-sm" onclick="doExport()">📥 CSV 추출</button>';
-  }
+  document.getElementById('login-btn').style.display = 'none';
+  document.getElementById('sync-badge').style.display = 'flex';
+  document.getElementById('csv-btn').style.display = 'inline-flex';
   goTab('dashboard');
 }
 

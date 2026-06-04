@@ -260,11 +260,11 @@ select {
         <div class="card-title">수입</div>
         <div class="form-group">
           <label class="form-label">소영 월급</label>
-          <input class="form-input" type="number" id="f-inc-s" placeholder="0" oninput="previewInc()">
+          <input class="form-input money-input" type="text" inputmode="numeric" id="f-inc-s" placeholder="0" oninput="previewInc()">
         </div>
         <div class="form-group">
           <label class="form-label">환희 월급</label>
-          <input class="form-input" type="number" id="f-inc-h" placeholder="0" oninput="previewInc()">
+          <input class="form-input money-input" type="text" inputmode="numeric" id="f-inc-h" placeholder="0" oninput="previewInc()">
         </div>
         <div class="inc-preview" id="inc-preview">합계: ₩0</div>
       </div>
@@ -272,15 +272,15 @@ select {
         <div class="card-title">생활비</div>
         <div class="form-group">
           <label class="form-label">소영 용돈</label>
-          <input class="form-input" type="number" id="f-liv-s" placeholder="0">
+          <input class="form-input money-input" type="text" inputmode="numeric" id="f-liv-s" placeholder="0">
         </div>
         <div class="form-group">
           <label class="form-label">환희 용돈</label>
-          <input class="form-input" type="number" id="f-liv-h" placeholder="0">
+          <input class="form-input money-input" type="text" inputmode="numeric" id="f-liv-h" placeholder="0">
         </div>
         <div class="form-group">
           <label class="form-label">공용비</label>
-          <input class="form-input" type="number" id="f-liv-c" placeholder="0">
+          <input class="form-input money-input" type="text" inputmode="numeric" id="f-liv-c" placeholder="0">
         </div>
       </div>
     </div>
@@ -292,26 +292,71 @@ select {
     <div class="grid3">
       <div class="card">
         <div class="card-title">관리비</div>
-        <div class="form-group"><label class="form-label">금액</label><input class="form-input" type="number" id="f-manage" placeholder="0"></div>
+        <div class="form-group"><label class="form-label">금액</label><input class="form-input money-input" type="text" inputmode="numeric" id="f-manage" placeholder="0"></div>
       </div>
       <div class="card">
         <div class="card-title">경조사비</div>
-        <div class="form-group"><label class="form-label">금액</label><input class="form-input" type="number" id="f-ceremony" placeholder="0"></div>
+        <div class="form-group"><label class="form-label">금액</label><input class="form-input money-input" type="text" inputmode="numeric" id="f-ceremony" placeholder="0"></div>
       </div>
       <div class="card">
         <div class="card-title">여행비</div>
-        <div class="form-group"><label class="form-label">금액</label><input class="form-input" type="number" id="f-travel" placeholder="0"></div>
+        <div class="form-group"><label class="form-label">금액</label><input class="form-input money-input" type="text" inputmode="numeric" id="f-travel" placeholder="0"></div>
       </div>
     </div>
-    <div class="grid2">
-      <div class="card">
-        <div class="card-title">적금 / 할부</div>
-        <div class="form-group"><label class="form-label">적금 합계</label><input class="form-input" type="number" id="f-sav" placeholder="0"></div>
-        <div class="form-group"><label class="form-label">할부 합계</label><input class="form-input" type="number" id="f-inst" placeholder="0"></div>
+    <!-- 적금 -->
+    <div class="card" id="sav-card">
+      <div class="card-header">
+        <div class="card-title">적금 내역</div>
+        <button class="btn btn-sm btn-ghost" onclick="addSavRow()">+ 항목 추가</button>
       </div>
-      <div class="card">
-        <div class="card-title">특이사항</div>
-        <div class="form-group"><label class="form-label">기타 지출</label><input class="form-input" type="number" id="f-misc" placeholder="0"></div>
+      <div id="sav-rows"></div>
+      <div style="text-align:right;font-size:12px;color:var(--text-m);margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border)">
+        이번 달 적금 합계: <span id="sav-total-preview" style="font-weight:600;color:var(--text)">₩0</span>
+      </div>
+    </div>
+
+    <!-- 할부 -->
+    <div class="card" id="inst-card">
+      <div class="card-header">
+        <div class="card-title">할부 내역</div>
+        <button class="btn btn-sm btn-ghost" onclick="addInstRow()">+ 항목 추가</button>
+      </div>
+      <div id="inst-rows"></div>
+      <div style="text-align:right;font-size:12px;color:var(--text-m);margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border)">
+        이번 달 할부 합계: <span id="inst-total-preview" style="font-weight:600;color:var(--text)">₩0</span>
+      </div>
+    </div>
+
+    <!-- 주식 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">주식</div>
+        <button class="btn btn-sm btn-ghost" onclick="addStockRow()">+ 항목 추가</button>
+      </div>
+      <div id="stock-rows"></div>
+      <div id="stock-summary" style="margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border);display:none">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+          <div style="text-align:center;padding:8px;background:var(--bg);border-radius:7px">
+            <div style="font-size:10px;color:var(--text-m);margin-bottom:3px">총 투자금</div>
+            <div style="font-size:14px;font-weight:600" id="stock-invested">₩0</div>
+          </div>
+          <div style="text-align:center;padding:8px;background:var(--bg);border-radius:7px">
+            <div style="font-size:10px;color:var(--text-m);margin-bottom:3px">총 평가금액</div>
+            <div style="font-size:14px;font-weight:600" id="stock-current">₩0</div>
+          </div>
+          <div style="text-align:center;padding:8px;background:var(--bg);border-radius:7px">
+            <div style="font-size:10px;color:var(--text-m);margin-bottom:3px">수익률</div>
+            <div style="font-size:14px;font-weight:600" id="stock-rate">0%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 특이사항 -->
+    <div class="card">
+      <div class="card-title" style="margin-bottom:0.75rem">특이사항</div>
+      <div class="grid2" style="margin-bottom:0">
+        <div class="form-group"><label class="form-label">기타 지출</label><input class="form-input money-input" type="text" inputmode="numeric" id="f-misc" placeholder="0"></div>
         <div class="form-group"><label class="form-label">메모</label><input class="form-input" type="text" id="f-memo" placeholder="예) 가전 구매, 병원비..."></div>
       </div>
     </div>
@@ -340,7 +385,7 @@ select {
       <div class="sec-divider" style="margin-top:16px">새 항목 추가</div>
       <div class="grid2" style="margin-bottom:0">
         <div class="form-group" style="margin:0"><label class="form-label">항목명</label><input class="form-input" type="text" id="new-name" placeholder="예) 구독 서비스"></div>
-        <div class="form-group" style="margin:0"><label class="form-label">월 금액</label><input class="form-input" type="number" id="new-amt" placeholder="0"></div>
+        <div class="form-group" style="margin:0"><label class="form-label">월 금액</label><input class="form-input money-input" type="text" inputmode="numeric" id="new-amt" placeholder="0"></div>
       </div>
       <div style="text-align:right;margin-top:10px"><button class="btn btn-primary" onclick="addFixed()">추가하기</button></div>
     </div>
@@ -381,9 +426,17 @@ let pieChart = null, lineChart = null, barChart = null;
 
 /* ── 유틸 ── */
 const fmt = n => '₩' + Math.round(n || 0).toLocaleString('ko-KR');
-const int = id => parseInt(document.getElementById(id).value) || 0;
+const int = id => { const el = document.getElementById(id); if (!el) return 0; return parseInt((el.value || '').replace(/[^0-9]/g, '')) || 0; };
 const val = id => document.getElementById(id).value;
-const set = (id, v) => { document.getElementById(id).value = v || ''; };
+const set = (id, v) => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (el.classList.contains('money-input') && v) {
+    el.value = parseInt(v).toLocaleString('ko-KR');
+  } else {
+    el.value = v || '';
+  }
+};
 const mKey = (y, m) => y + '-' + String(m).padStart(2, '0');
 const fixedSum = () => fixedItems.reduce((s, i) => s + (i.amount || 0), 0);
 
@@ -410,7 +463,7 @@ function goTab(name) {
   if (name === 'dashboard') renderDash();
   if (name === 'history') renderHistory();
   if (name === 'settings') renderSettings();
-  if (name === 'input') renderInputPage();
+  if (name === 'input') { renderInputPage(); setTimeout(initMoneyInputs, 50); }
 }
 
 /* ── 월 셀렉트 채우기 ── */
@@ -566,11 +619,13 @@ function calcMonth(d) {
   const fixed = fixedSum();
   const living = (d.livS || 0) + (d.livH || 0) + (d.livC || 0);
   const totalInc = (d.incS || 0) + (d.incH || 0);
+  const savTotal = d.savRows ? d.savRows.reduce((s,r) => s + (r.amt||0), 0) : (d.sav || 0);
+  const instTotal = d.instRows ? d.instRows.reduce((s,r) => s + (r.amt||0), 0) : (d.inst || 0);
   const totalExp = fixed + living + (d.manage || 0) + (d.ceremony || 0) +
-    (d.sav || 0) + (d.inst || 0) + (d.travel || 0) + (d.misc || 0);
+    savTotal + instTotal + (d.travel || 0) + (d.misc || 0);
   const remain = totalInc - totalExp;
   const rate = totalInc ? Math.round(remain / totalInc * 100) : 0;
-  return { fixed, living, totalInc, totalExp, remain, rate };
+  return { fixed, living, totalInc, totalExp, remain, rate, savTotal, instTotal };
 }
 
 /* ── 대시보드 ── */
@@ -729,6 +784,10 @@ function renderInputPage() {
     `<div class="chip"><span class="chip-name">${f.name}</span><span class="chip-amt">${fmt(f.amount)}</span></div>`
   ).join('');
   document.getElementById('inp-fixed-total').textContent = fmt(fixedSum());
+  // 기본 행 초기화
+  if (!document.querySelector('.sav-row')) addSavRow();
+  if (!document.querySelector('.inst-row')) addInstRow();
+  if (!document.querySelector('.stock-row')) addStockRow();
 }
 
 function previewInc() {
@@ -742,19 +801,60 @@ function loadMonth() {
   set('f-inc-s', d.incS); set('f-inc-h', d.incH);
   set('f-liv-s', d.livS); set('f-liv-h', d.livH); set('f-liv-c', d.livC);
   set('f-manage', d.manage); set('f-ceremony', d.ceremony);
-  set('f-sav', d.sav); set('f-inst', d.inst);
   set('f-travel', d.travel); set('f-misc', d.misc); set('f-memo', d.memo);
+  // 적금 행 복원
+  const savWrap = document.getElementById('sav-rows');
+  savWrap.innerHTML = '';
+  if (d.savRows && d.savRows.length) {
+    d.savRows.forEach(r => addSavRow(r.name, r.amt));
+  } else { addSavRow(); }
+  // 할부 행 복원
+  const instWrap = document.getElementById('inst-rows');
+  instWrap.innerHTML = '';
+  if (d.instRows && d.instRows.length) {
+    d.instRows.forEach(r => addInstRow(r.name, r.amt));
+  } else { addInstRow(); }
+  // 주식 행 복원
+  const stockWrap = document.getElementById('stock-rows');
+  stockWrap.innerHTML = '';
+  if (d.stockRows && d.stockRows.length) {
+    d.stockRows.forEach(r => addStockRow(r.name, r.invested, r.current));
+  } else { addStockRow(); }
+  updateSavTotal(); updateInstTotal(); updateStockSummary();
   previewInc();
+  setTimeout(initMoneyInputs, 50);
   toast(d.incS ? '기존 데이터 불러왔어!' : '새 달이야. 입력해줘!');
 }
 
 async function saveMonth() {
   const key = document.getElementById('inp-sel').value;
+  // 적금 행 수집
+  const savRows = [];
+  document.querySelectorAll('.sav-row').forEach(row => {
+    const name = row.querySelector('.sav-name').value.trim();
+    const amt = parseInt((row.querySelector('.sav-amt').value || '').replace(/[^0-9]/g, '')) || 0;
+    if (name || amt) savRows.push({ name, amt });
+  });
+  // 할부 행 수집
+  const instRows = [];
+  document.querySelectorAll('.inst-row').forEach(row => {
+    const name = row.querySelector('.inst-name').value.trim();
+    const amt = parseInt((row.querySelector('.inst-amt').value || '').replace(/[^0-9]/g, '')) || 0;
+    if (name || amt) instRows.push({ name, amt });
+  });
+  // 주식 행 수집
+  const stockRows = [];
+  document.querySelectorAll('.stock-row').forEach(row => {
+    const name = row.querySelector('.stock-name').value.trim();
+    const invested = parseInt((row.querySelector('.stock-invested').value || '').replace(/[^0-9]/g, '')) || 0;
+    const current = parseInt((row.querySelector('.stock-current').value || '').replace(/[^0-9]/g, '')) || 0;
+    if (name || invested) stockRows.push({ name, invested, current });
+  });
   userData[key] = {
     incS: int('f-inc-s'), incH: int('f-inc-h'),
     livS: int('f-liv-s'), livH: int('f-liv-h'), livC: int('f-liv-c'),
     manage: int('f-manage'), ceremony: int('f-ceremony'),
-    sav: int('f-sav'), inst: int('f-inst'),
+    savRows, instRows, stockRows,
     travel: int('f-travel'), misc: int('f-misc'), memo: val('f-memo')
   };
   await saveToDrive();
@@ -820,6 +920,123 @@ function doExport() {
   a.download = '가계부_' + new Date().toISOString().slice(0, 10) + '.csv';
   a.click();
   toast('파일 저장됐어!');
+}
+
+
+/* ── 콤마 자동입력 ── */
+function initMoneyInputs() {
+  document.querySelectorAll('.money-input').forEach(el => {
+    el.addEventListener('input', function(e) {
+      const pos = this.selectionStart;
+      const before = this.value.length;
+      // 숫자만 추출
+      const raw = this.value.replace(/[^0-9]/g, '');
+      // 콤마 포맷
+      const formatted = raw ? parseInt(raw).toLocaleString('ko-KR') : '';
+      this.value = formatted;
+      // 커서 위치 보정
+      const after = this.value.length;
+      const newPos = pos + (after - before);
+      try { this.setSelectionRange(newPos, newPos); } catch(e) {}
+      // previewInc 트리거
+      if (this.id === 'f-inc-s' || this.id === 'f-inc-h') previewInc();
+    });
+    // 포커스 잃을 때도 정리
+    el.addEventListener('blur', function() {
+      const raw = this.value.replace(/[^0-9]/g, '');
+      this.value = raw ? parseInt(raw).toLocaleString('ko-KR') : '';
+    });
+  });
+}
+
+// int() 함수 오버라이드 — 콤마 제거 후 파싱
+const _origInt = window._intOrig = (id) => {
+  const el = document.getElementById(id);
+  if (!el) return 0;
+  return parseInt(el.value.replace(/[^0-9]/g, '')) || 0;
+};
+
+
+/* ── 적금 행 ── */
+function addSavRow(name='', amt=0) {
+  const wrap = document.getElementById('sav-rows');
+  const div = document.createElement('div');
+  div.className = 'sav-row';
+  div.style.cssText = 'display:grid;grid-template-columns:1fr 140px 32px;gap:6px;margin-bottom:6px;align-items:center';
+  div.innerHTML = `
+    <input class="form-input sav-name" type="text" placeholder="예) 내맘적금" value="${name}" style="font-size:13px;padding:6px 10px">
+    <input class="form-input money-input sav-amt" type="text" inputmode="numeric" placeholder="0" value="${amt ? parseInt(amt).toLocaleString('ko-KR') : ''}" style="font-size:13px;padding:6px 10px;text-align:right" oninput="updateSavTotal()">
+    <button class="btn btn-ghost" onclick="this.parentElement.remove();updateSavTotal()" style="padding:6px;color:var(--red);font-size:14px">✕</button>
+  `;
+  wrap.appendChild(div);
+  setTimeout(initMoneyInputs, 10);
+}
+function updateSavTotal() {
+  let total = 0;
+  document.querySelectorAll('.sav-amt').forEach(el => {
+    total += parseInt((el.value||'').replace(/[^0-9]/g,'')) || 0;
+  });
+  const el = document.getElementById('sav-total-preview');
+  if (el) el.textContent = fmt(total);
+}
+
+/* ── 할부 행 ── */
+function addInstRow(name='', amt=0) {
+  const wrap = document.getElementById('inst-rows');
+  const div = document.createElement('div');
+  div.className = 'inst-row';
+  div.style.cssText = 'display:grid;grid-template-columns:1fr 140px 32px;gap:6px;margin-bottom:6px;align-items:center';
+  div.innerHTML = `
+    <input class="form-input inst-name" type="text" placeholder="예) 자동차 할부" value="${name}" style="font-size:13px;padding:6px 10px">
+    <input class="form-input money-input inst-amt" type="text" inputmode="numeric" placeholder="0" value="${amt ? parseInt(amt).toLocaleString('ko-KR') : ''}" style="font-size:13px;padding:6px 10px;text-align:right" oninput="updateInstTotal()">
+    <button class="btn btn-ghost" onclick="this.parentElement.remove();updateInstTotal()" style="padding:6px;color:var(--red);font-size:14px">✕</button>
+  `;
+  wrap.appendChild(div);
+  setTimeout(initMoneyInputs, 10);
+}
+function updateInstTotal() {
+  let total = 0;
+  document.querySelectorAll('.inst-amt').forEach(el => {
+    total += parseInt((el.value||'').replace(/[^0-9]/g,'')) || 0;
+  });
+  const el = document.getElementById('inst-total-preview');
+  if (el) el.textContent = fmt(total);
+}
+
+/* ── 주식 행 ── */
+function addStockRow(name='', invested=0, current=0) {
+  const wrap = document.getElementById('stock-rows');
+  const div = document.createElement('div');
+  div.className = 'stock-row';
+  div.style.cssText = 'display:grid;grid-template-columns:1fr 130px 130px 32px;gap:6px;margin-bottom:6px;align-items:center';
+  div.innerHTML = `
+    <input class="form-input stock-name" type="text" placeholder="예) 삼성전자" value="${name}" style="font-size:13px;padding:6px 10px">
+    <input class="form-input money-input stock-invested" type="text" inputmode="numeric" placeholder="투자금" value="${invested ? parseInt(invested).toLocaleString('ko-KR') : ''}" style="font-size:13px;padding:6px 10px;text-align:right" oninput="updateStockSummary()">
+    <input class="form-input money-input stock-current" type="text" inputmode="numeric" placeholder="평가금액" value="${current ? parseInt(current).toLocaleString('ko-KR') : ''}" style="font-size:13px;padding:6px 10px;text-align:right" oninput="updateStockSummary()">
+    <button class="btn btn-ghost" onclick="this.parentElement.remove();updateStockSummary()" style="padding:6px;color:var(--red);font-size:14px">✕</button>
+  `;
+  wrap.appendChild(div);
+  setTimeout(initMoneyInputs, 10);
+}
+function updateStockSummary() {
+  let totalInvested = 0, totalCurrent = 0;
+  document.querySelectorAll('.stock-row').forEach(row => {
+    totalInvested += parseInt((row.querySelector('.stock-invested').value||'').replace(/[^0-9]/g,'')) || 0;
+    totalCurrent += parseInt((row.querySelector('.stock-current').value||'').replace(/[^0-9]/g,'')) || 0;
+  });
+  const summary = document.getElementById('stock-summary');
+  if (!summary) return;
+  if (totalInvested > 0) {
+    summary.style.display = 'block';
+    const rate = Math.round((totalCurrent - totalInvested) / totalInvested * 100 * 10) / 10;
+    document.getElementById('stock-invested').textContent = fmt(totalInvested);
+    document.getElementById('stock-current').textContent = fmt(totalCurrent);
+    const rateEl = document.getElementById('stock-rate');
+    rateEl.textContent = (rate >= 0 ? '+' : '') + rate + '%';
+    rateEl.style.color = rate >= 0 ? 'var(--green-dark)' : 'var(--red-dark)';
+  } else {
+    summary.style.display = 'none';
+  }
 }
 
 /* ── 초기화 ── */

@@ -387,27 +387,23 @@ select{padding:5px 10px;border:0.5px solid var(--border);border-radius:7px;font-
   <div id="section-settings" class="section">
     <div style="font-size:18px;font-weight:600;margin-bottom:16px">고정비 설정</div>
     <div class="card">
-      <div style="display:grid;grid-template-columns:1fr 90px 110px 110px 60px;gap:6px;margin-bottom:8px;padding-bottom:8px;border-bottom:0.5px solid var(--border)">
+      <div style="display:grid;grid-template-columns:1fr 90px 120px 60px;gap:6px;margin-bottom:8px;padding-bottom:8px;border-bottom:0.5px solid var(--border)">
         <div style="font-size:10px;color:var(--text-l)">항목명</div>
         <div style="font-size:10px;color:var(--text-l);text-align:center">납입자</div>
-        <div style="font-size:10px;color:var(--text-l);text-align:right">소영 금액</div>
-        <div style="font-size:10px;color:var(--text-l);text-align:right">환희 금액</div>
+        <div style="font-size:10px;color:var(--text-l);text-align:right">금액</div>
         <div></div>
       </div>
       <div id="set-list"></div>
       <div class="sec-div">새 항목 추가</div>
-      <div style="display:grid;grid-template-columns:1fr 90px 110px 110px auto;gap:6px;align-items:end">
+      <div style="display:grid;grid-template-columns:1fr 90px 120px auto;gap:6px;align-items:end">
         <div><label class="form-label">항목명</label><input class="form-input" type="text" id="new-name" placeholder="예) 구독 서비스"></div>
         <div><label class="form-label">납입자</label>
           <select class="set-who" id="new-who" style="width:100%;padding:8px 6px">
-            <option value="공용">공용</option>
             <option value="소영">소영</option>
             <option value="환희">환희</option>
-            <option value="각자">각자</option>
           </select>
         </div>
-        <div><label class="form-label">소영 금액</label><input class="form-input money-input" type="text" inputmode="numeric" id="new-amt-s" placeholder="0"></div>
-        <div><label class="form-label">환희 금액</label><input class="form-input money-input" type="text" inputmode="numeric" id="new-amt-h" placeholder="0"></div>
+        <div><label class="form-label">금액</label><input class="form-input money-input" type="text" inputmode="numeric" id="new-amt" placeholder="0"></div>
         <div style="padding-bottom:1px"><button class="btn btn-primary" onclick="addFixed()" style="width:100%">추가</button></div>
       </div>
     </div>
@@ -433,9 +429,10 @@ const ASSETS_FILE = 'hh_assets_v2.json';
 const DEFAULT_FIXED = [
   {name:'인터넷',who:'환희',amtS:0,amtH:19000},
   {name:'렌탈 (비데·정수기)',who:'환희',amtS:0,amtH:55280},
-  {name:'보험',who:'각자',amtS:69070,amtH:69070},
+  {name:'보험 (소영)',who:'소영',amtS:138140,amtH:0},
   {name:'OTT (넷플·유튜브)',who:'환희',amtS:0,amtH:28400},
-  {name:'통신비',who:'각자',amtS:36735,amtH:46490},
+  {name:'통신비 (환희)',who:'환희',amtS:0,amtH:46490},
+  {name:'통신비 (소영)',who:'소영',amtS:36735,amtH:0},
   {name:'후원 (샘샘이)',who:'소영',amtS:45000,amtH:0}
 ];
 
@@ -478,7 +475,7 @@ function fillSelects(){
   const now=new Date();
   document.querySelectorAll('#dash-sel,#inp-sel,#asset-sel').forEach(sel=>{
     sel.innerHTML='';
-    for(let y=2024;y<=now.getFullYear()+1;y++){
+    for(let y=2024;y<=2040;y++){
       for(let m=1;m<=12;m++){
         const o=document.createElement('option');
         o.value=mKey(y,m);
@@ -996,22 +993,32 @@ function renderSettings(){
   document.getElementById('set-total-s').textContent=fmt(totS);
   document.getElementById('set-total-h').textContent=fmt(totH);
   document.getElementById('set-total').textContent=fmt(totS+totH);
-  document.getElementById('set-list').innerHTML=fixedItems.map((f,i)=>
-    `<div class="set-row">
+  document.getElementById('set-list').innerHTML=fixedItems.map((f,i)=>{
+    const amt=(f.who==='소영'?(f.amtS||0):(f.amtH||0));
+    return`<div class="set-row" style="display:grid;grid-template-columns:1fr 90px 120px 60px;gap:8px;align-items:center;padding:8px 0;border-bottom:0.5px solid var(--border)">
       <span class="set-name">${f.name}</span>
       <select class="set-who" onchange="updateFixedWho(${i},this.value)">
-        <option ${f.who==='공용'?'selected':''}>공용</option>
         <option ${f.who==='소영'?'selected':''}>소영</option>
         <option ${f.who==='환희'?'selected':''}>환희</option>
-        <option ${f.who==='각자'?'selected':''}>각자</option>
       </select>
-      <input class="set-input" type="number" value="${f.amtS||0}" placeholder="소영" onchange="updateFixedAmt(${i},'s',this.value)">
-      <input class="set-input" type="number" value="${f.amtH||0}" placeholder="환희" onchange="updateFixedAmt(${i},'h',this.value)">
+      <input class="set-input" type="number" value="${amt}" style="text-align:right" onchange="updateFixedAmtSingle(${i},this.value)">
       <button class="btn btn-ghost btn-danger btn-sm" onclick="removeFixed(${i})">삭제</button>
-    </div>`
-  ).join('');
+    </div>`;
+  }).join('');
 }
-function updateFixedWho(i,v){fixedItems[i].who=v;saveToDrive();}
+function updateFixedWho(i,v){
+  const cur=fixedItems[i].who==='소영'?(fixedItems[i].amtS||0):(fixedItems[i].amtH||0);
+  fixedItems[i].who=v;
+  fixedItems[i].amtS=v==='소영'?cur:0;
+  fixedItems[i].amtH=v==='환희'?cur:0;
+  renderSettings();saveToDrive();
+}
+function updateFixedAmtSingle(i,v){
+  const amt=parseInt(v)||0;
+  if(fixedItems[i].who==='소영'){fixedItems[i].amtS=amt;fixedItems[i].amtH=0;}
+  else{fixedItems[i].amtH=amt;fixedItems[i].amtS=0;}
+  renderSettings();saveToDrive();
+}
 function updateFixedAmt(i,who,v){
   fixedItems[i][who==='s'?'amtS':'amtH']=parseInt(v)||0;
   renderSettings();saveToDrive();
@@ -1020,13 +1027,13 @@ function removeFixed(i){fixedItems.splice(i,1);renderSettings();saveToDrive();to
 async function addFixed(){
   const name=document.getElementById('new-name').value.trim();
   const who=document.getElementById('new-who').value;
-  const amtS=parseInt((document.getElementById('new-amt-s').value||'').replace(/[^0-9]/g,''))||0;
-  const amtH=parseInt((document.getElementById('new-amt-h').value||'').replace(/[^0-9]/g,''))||0;
+  const amt=parseInt((document.getElementById('new-amt').value||'').replace(/[^0-9]/g,''))||0;
   if(!name){toast('항목명을 입력해줘!');return;}
+  const amtS=who==='소영'?amt:0;
+  const amtH=who==='환희'?amt:0;
   fixedItems.push({name,who,amtS,amtH});
   document.getElementById('new-name').value='';
-  document.getElementById('new-amt-s').value='';
-  document.getElementById('new-amt-h').value='';
+  document.getElementById('new-amt').value='';
   renderSettings();await saveToDrive();toast('추가됐어!');
 }
 

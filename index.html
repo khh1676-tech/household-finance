@@ -518,20 +518,26 @@ async function writeDriveFile(id, name, content) {
 }
 
 async function loadFromDrive() {
+  console.log('[가계부] loadFromDrive 시작, token:', token ? '있음' : '없음');
   try {
+    console.log('[가계부] findFileId 호출 중...');
     dataFileId = await findFileId(DATA_FILE);
+    console.log('[가계부] dataFileId:', dataFileId);
     if (dataFileId) {
       const d = await readDriveFile(dataFileId);
       if (d && typeof d === 'object' && !d.error) userData = d;
     }
     fixedFileId = await findFileId(FIXED_FILE);
+    console.log('[가계부] fixedFileId:', fixedFileId);
     if (fixedFileId) {
       const f = await readDriveFile(fixedFileId);
       if (f && Array.isArray(f)) fixedItems = f;
     }
+    console.log('[가계부] 완료!');
   } catch (e) {
-    toast('드라이브 오류: ' + e.message);
+    console.log('[가계부] 오류:', e);
   } finally {
+    console.log('[가계부] finally 실행');
     fillMonthSelects();
     renderDash();
     syncStatus(true, '구글 드라이브 연동');

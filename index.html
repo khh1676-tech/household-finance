@@ -653,7 +653,7 @@ function renderDash(){
     document.getElementById('dash-stock').style.display='none';
     if(pieChart){pieChart.destroy();pieChart=null;}
     document.getElementById('pie-legend').innerHTML='';
-    renderLineChart();return;
+    return;
   }
   const c=calcMonth(d);
   metricsEl.innerHTML=`

@@ -366,14 +366,7 @@ select{padding:5px 10px;border:0.5px solid var(--border);border-radius:7px;font-
         </div>
       </div>
     </div>
-    <div class="card">
-      <div class="card-title" style="margin-bottom:12px">🏦 적금</div>
-      <div id="asset-sav-list"></div>
-      <div style="margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border);display:flex;justify-content:space-between;font-size:13px">
-        <span style="color:var(--text-m)">적금 합계 (납입 누계)</span>
-        <span style="font-weight:600" id="asset-sav-total">₩0</span>
-      </div>
-    </div>
+
     <!-- 자산 현황 입력 -->
     <div class="card">
       <div class="card-hdr">
@@ -779,11 +772,10 @@ function renderAssets(){
     '<div style="color:var(--text-l);font-size:13px;padding:8px 0">이 달까지 적금 데이터 없음</div>';
   document.getElementById('asset-sav-total').textContent=fmt(totalSav);
 
-  const grandTotal=totalCash+totalStock+totalSav;
+  const grandTotal=totalCash+totalStock;
   document.getElementById('asset-metrics').innerHTML=`
     <div class="met"><div class="met-l">총 자산</div><div class="met-v g">${fmt(grandTotal)}</div></div>
     <div class="met"><div class="met-l">현금/통장</div><div class="met-v b">${fmt(totalCash)}</div></div>
-    <div class="met"><div class="met-l">적금 누계</div><div class="met-v">${fmt(totalSav)}</div></div>
     <div class="met"><div class="met-l">주식 평가</div><div class="met-v ${totalStock>0?'g':''}">${fmt(totalStock)}</div></div>`;
 
   // 현금 입력 행

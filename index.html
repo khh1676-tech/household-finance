@@ -433,12 +433,12 @@ function fillMonthSelects() {
 /* ── 앱 표시 ── */
 function showApp() {
   document.getElementById('login-screen').style.display = 'none';
-  goTab('dashboard');
   if (token && token !== 'local') {
     document.getElementById('hdr-right').innerHTML =
       '<div class="sync-badge"><div class="sync-dot off" id="sync-dot"></div><span id="sync-txt">연결 중...</span></div>' +
       '<button class="btn btn-sm" onclick="doExport()">📥 CSV 추출</button>';
   }
+  goTab('dashboard');
 }
 
 /* ── 구글 로그인 ── */

@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>소영 & 환희 가계부</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --green: #1D9E75; --green-light: #E1F5EE; --green-dark: #0F6E56;
+  --red: #D85A30; --red-light: #FAECE7; --red-dark: #993C1D;
+  --blue: #378ADD; --blue-light: #E6F1FB;
+  --purple: #534AB7; --amber: #BA7517; --pink: #D4537E;
+  --surface: #ffffff; --bg: #F8F7F4;
+  --border: rgba(0,0,0,0.1);
+  --text: #1A1A18; --text-m: #888780; --text-l: #B4B2A9;
+  --radius: 10px; --radius-lg: 14px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+
+/* ── 헤더 ── */
+.header {
+  height: 54px; background: var(--surface); border-bottom: 0.5px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px; position: sticky; top: 0; z-index: 100;
+}
+.logo { font-size: 15px; font-weight: 600; }
+.logo span { color: var(--green); }
+.nav { display: flex; gap: 2px; }
+.nav-btn {
+  padding: 5px 12px; border-radius: 7px; font-size: 13px; font-weight: 500;
+  border: none; background: none; cursor: pointer; color: var(--text-m);
+  font-family: 'Noto Sans KR', sans-serif; transition: all .15s;
+}
+.nav-btn:hover { background: var(--bg); color: var(--text); }
+.nav-btn.on { background: #EFEDE8; color: var(--text); }
+.header-right { display: flex; align-items: center; gap: 8px; }
+.sync-badge {
+  display: flex; align-items: center; gap: 5px; font-size: 11px;
+  color: var(--text-m); background: var(--bg); padding: 4px 9px;
+  border-radius: 6px; border: 0.5px solid var(--border);
+}
+.sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+.sync-dot.off { background: var(--text-l); }
+
+/* ── 버튼 ── */
+.btn {
+  padding: 7px 13px; border-radius: 7px; font-size: 12px; font-weight: 500;
+  border: 0.5px solid var(--border); cursor: pointer; background: var(--surface);
+  color: var(--text); font-family: 'Noto Sans KR', sans-serif;
+  display: inline-flex; align-items: center; gap: 4px; transition: all .15s;
+}
+.btn:hover { background: var(--bg); }
+.btn-primary { background: var(--green); color: #fff; border-color: var(--green); }
+.btn-primary:hover { background: var(--green-dark); border-color: var(--green-dark); }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn-ghost { background: none; border-color: transparent; color: var(--text-m); }
+.btn-ghost:hover { background: var(--bg); color: var(--text); }
+
+/* ── 메인 ── */
+.main { max-width: 980px; margin: 0 auto; padding: 24px 20px; }
+.section { display: none; }
+.section.on { display: block; }
+
+/* ── 월 선택 바 ── */
+.month-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--surface); border: 0.5px solid var(--border);
+  border-radius: var(--radius); padding: 9px 14px; margin-bottom: 16px;
+}
+.month-bar-left { display: flex; align-items: center; gap: 10px; }
+.month-label { font-size: 12px; color: var(--text-m); font-weight: 500; }
+.month-bar-right { display: flex; align-items: center; gap: 8px; }
+select {
+  padding: 5px 10px; border: 0.5px solid var(--border); border-radius: 7px;
+  font-size: 13px; font-family: 'Noto Sans KR', sans-serif;
+  color: var(--text); background: var(--bg); cursor: pointer;
+}
+
+/* ── 메트릭 카드 ── */
+.metrics { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 16px; }
+.met { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+.met-label { font-size: 10px; font-weight: 600; color: var(--text-m); letter-spacing: .5px; text-transform: uppercase; margin-bottom: 6px; }
+.met-value { font-size: 20px; font-weight: 600; letter-spacing: -.5px; }
+.met-sub { font-size: 10px; color: var(--text-l); margin-top: 3px; }
+.g { color: var(--green-dark); } .r { color: var(--red-dark); } .b { color: #185FA5; }
+
+/* ── 카드 ── */
+.card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 16px; margin-bottom: 12px; }
+.card-title { font-size: 10px; font-weight: 600; color: var(--text-m); letter-spacing: .5px; text-transform: uppercase; margin-bottom: 12px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+
+/* ── 차트 ── */
+.chart-wrap { position: relative; width: 100%; }
+
+/* ── 도넛 + 레전드 ── */
+.donut-layout { display: flex; align-items: center; gap: 20px; }
+.donut-box { width: 110px; height: 110px; flex-shrink: 0; position: relative; }
+.legend { flex: 1; }
+.leg-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; font-size: 12px; }
+.leg-name { display: flex; align-items: center; gap: 5px; color: var(--text-m); }
+.leg-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+.leg-amt { font-weight: 600; color: var(--text); }
+
+/* ── 진행 바 ── */
+.brow { margin-bottom: 10px; }
+.brow-top { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+.brow-name { color: var(--text-m); }
+.brow-val { font-weight: 600; }
+.brow-pct { color: var(--text-l); font-size: 10px; margin-left: 3px; }
+.prog { height: 4px; background: #EFEDE8; border-radius: 2px; overflow: hidden; }
+.pfill { height: 100%; border-radius: 2px; transition: width .5s; }
+
+/* ── 입력 폼 ── */
+.form-group { margin-bottom: 12px; }
+.form-label { display: block; font-size: 11px; font-weight: 600; color: var(--text-m); letter-spacing: .4px; text-transform: uppercase; margin-bottom: 5px; }
+.form-input {
+  width: 100%; padding: 8px 11px; border: 0.5px solid var(--border);
+  border-radius: 7px; font-size: 14px; font-family: 'Noto Sans KR', sans-serif;
+  color: var(--text); background: var(--surface); transition: border-color .15s;
+}
+.form-input:focus { outline: none; border-color: var(--green); box-shadow: 0 0 0 2px rgba(29,158,117,.1); }
+.form-input::placeholder { color: var(--text-l); }
+.sec-divider { font-size: 10px; font-weight: 600; color: var(--text-m); letter-spacing: .5px; text-transform: uppercase; margin: 16px 0 10px; padding-bottom: 6px; border-bottom: 0.5px solid var(--border); }
+.inc-preview { padding: 9px 12px; background: var(--green-light); border-radius: 7px; font-size: 13px; font-weight: 600; color: var(--green-dark); }
+
+/* ── 고정비 칩 ── */
+.chip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+.chip { display: flex; justify-content: space-between; padding: 7px 10px; background: var(--bg); border-radius: 6px; font-size: 12px; }
+.chip-name { color: var(--text-m); }
+.chip-amt { font-weight: 600; }
+
+/* ── 히스토리 테이블 ── */
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tbl th { text-align: left; padding: 8px 12px; font-size: 10px; font-weight: 600; color: var(--text-m); letter-spacing: .4px; text-transform: uppercase; border-bottom: 0.5px solid var(--border); }
+.tbl td { padding: 10px 12px; border-bottom: 0.5px solid var(--border); }
+.tbl tr:last-child td { border-bottom: none; }
+.tbl tr:hover td { background: var(--bg); }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.badge-g { background: var(--green-light); color: var(--green-dark); }
+.badge-r { background: var(--red-light); color: var(--red-dark); }
+
+/* ── 설정 ── */
+.set-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 0.5px solid var(--border); }
+.set-row:last-child { border-bottom: none; }
+.set-name { flex: 1; font-size: 13px; color: var(--text-m); }
+.set-input { width: 130px; padding: 6px 10px; border: 0.5px solid var(--border); border-radius: 6px; font-size: 13px; font-family: 'Noto Sans KR', sans-serif; color: var(--text); background: var(--surface); text-align: right; }
+.set-input:focus { outline: none; border-color: var(--green); }
+.total-card { background: var(--green-light); border-radius: var(--radius); padding: 14px 16px; margin-top: 12px; }
+.total-label { font-size: 11px; font-weight: 600; color: var(--green-dark); margin-bottom: 4px; }
+.total-value { font-size: 22px; font-weight: 600; color: var(--green-dark); }
+
+/* ── 빈 상태 ── */
+.empty { text-align: center; padding: 40px 20px; color: var(--text-l); }
+.empty-icon { font-size: 28px; margin-bottom: 8px; }
+
+/* ── 토스트 ── */
+.toast {
+  position: fixed; bottom: 20px; left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  background: #1A1A18; color: #fff; padding: 9px 18px;
+  border-radius: 8px; font-size: 13px; opacity: 0;
+  transition: all .25s; pointer-events: none; z-index: 999; white-space: nowrap;
+}
+.toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── 로그인 화면 ── */
+.login-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70vh; text-align: center; }
+.login-icon { font-size: 48px; margin-bottom: 16px; }
+.login-title { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+.login-desc { font-size: 13px; color: var(--text-m); line-height: 1.8; margin-bottom: 28px; }
+.google-btn { background: #4285F4; color: #fff; border-color: #4285F4; padding: 11px 24px; font-size: 14px; border-radius: 8px; }
+.google-btn:hover { background: #3367D6; }
+
+/* ── 반응형 ── */
+@media (max-width: 700px) {
+  .header { padding: 0 12px; }
+  .nav-btn .nav-text { display: none; }
+  .main { padding: 14px 12px; }
+  .metrics { grid-template-columns: 1fr 1fr; }
+  .grid2, .grid3 { grid-template-columns: 1fr; }
+  .met-value { font-size: 17px; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">소영 <span>&</span> 환희 가계부</div>
+  <nav class="nav">
+    <button class="nav-btn on" id="tab-dashboard" onclick="goTab('dashboard')">📊 <span class="nav-text">대시보드</span></button>
+    <button class="nav-btn" id="tab-input" onclick="goTab('input')">✏️ <span class="nav-text">월별 입력</span></button>
+    <button class="nav-btn" id="tab-history" onclick="goTab('history')">📅 <span class="nav-text">히스토리</span></button>
+    <button class="nav-btn" id="tab-settings" onclick="goTab('settings')">⚙️ <span class="nav-text">고정비 설정</span></button>
+  </nav>
+  <div class="header-right" id="hdr-right">
+    <button class="btn google-btn" onclick="doSignIn()">🔑 구글 로그인</button>
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- 로그인 전 -->
+  <div id="login-screen" class="login-wrap">
+    <div class="login-icon">🏠</div>
+    <div class="login-title">소영 & 환희 가계부</div>
+    <div class="login-desc">구글 계정으로 로그인하면<br>모든 기기에서 같은 데이터를 볼 수 있어요.<br>데이터는 내 구글 드라이브에 안전하게 저장돼요.</div>
+    <button class="btn google-btn" onclick="doSignIn()">🔑 구글로 시작하기</button>
+  </div>
+
+  <!-- 대시보드 -->
+  <div id="section-dashboard" class="section">
+    <div class="month-bar">
+      <div class="month-bar-left">
+        <span class="month-label">조회 월</span>
+        <select id="dash-sel" onchange="renderDash()"></select>
+      </div>
+      <div class="month-bar-right">
+        <div class="sync-badge"><div class="sync-dot off" id="sync-dot"></div><span id="sync-txt">연결 중...</span></div>
+        <button class="btn btn-sm" onclick="doExport()">📥 CSV 추출</button>
+      </div>
+    </div>
+    <div class="metrics" id="dash-metrics"></div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">지출 구성</div>
+        <div class="donut-layout">
+          <div class="donut-box"><canvas id="pie-c" role="img" aria-label="지출 구성 도넛 차트"></canvas></div>
+          <div class="legend" id="pie-legend"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">항목별 비율</div>
+        <div id="brows"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">월별 비상금 추이</div>
+      <div class="chart-wrap" style="height:180px"><canvas id="line-c" role="img" aria-label="월별 비상금 추이 차트"></canvas></div>
+    </div>
+  </div>
+
+  <!-- 월별 입력 -->
+  <div id="section-input" class="section">
+    <div class="month-bar">
+      <div class="month-bar-left">
+        <span class="month-label">입력 월</span>
+        <select id="inp-sel"></select>
+        <button class="btn btn-sm btn-ghost" onclick="loadMonth()">불러오기</button>
+      </div>
+      <button class="btn btn-primary" onclick="saveMonth()">💾 저장하기</button>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">수입</div>
+        <div class="form-group">
+          <label class="form-label">소영 월급</label>
+          <input class="form-input" type="number" id="f-inc-s" placeholder="0" oninput="previewInc()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">환희 월급</label>
+          <input class="form-input" type="number" id="f-inc-h" placeholder="0" oninput="previewInc()">
+        </div>
+        <div class="inc-preview" id="inc-preview">합계: ₩0</div>
+      </div>
+      <div class="card">
+        <div class="card-title">생활비</div>
+        <div class="form-group">
+          <label class="form-label">소영 용돈</label>
+          <input class="form-input" type="number" id="f-liv-s" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">환희 용돈</label>
+          <input class="form-input" type="number" id="f-liv-h" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">공용비</label>
+          <input class="form-input" type="number" id="f-liv-c" placeholder="0">
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">고정비 <span style="font-size:10px;font-weight:400;color:var(--text-l)">(고정비 설정 탭에서 수정)</span></div>
+      <div class="chip-grid" id="inp-fixed-chips"></div>
+      <div style="text-align:right;font-size:12px;color:var(--text-m)">합계: <span id="inp-fixed-total" style="font-weight:600;color:var(--text)">₩0</span></div>
+    </div>
+    <div class="grid3">
+      <div class="card">
+        <div class="card-title">관리비</div>
+        <div class="form-group"><label class="form-label">금액</label><input class="form-input" type="number" id="f-manage" placeholder="0"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">경조사비</div>
+        <div class="form-group"><label class="form-label">금액</label><input class="form-input" type="number" id="f-ceremony" placeholder="0"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">여행비</div>
+        <div class="form-group"><label class="form-label">금액</label><input class="form-input" type="number" id="f-travel" placeholder="0"></div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">적금 / 할부</div>
+        <div class="form-group"><label class="form-label">적금 합계</label><input class="form-input" type="number" id="f-sav" placeholder="0"></div>
+        <div class="form-group"><label class="form-label">할부 합계</label><input class="form-input" type="number" id="f-inst" placeholder="0"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">특이사항</div>
+        <div class="form-group"><label class="form-label">기타 지출</label><input class="form-input" type="number" id="f-misc" placeholder="0"></div>
+        <div class="form-group"><label class="form-label">메모</label><input class="form-input" type="text" id="f-memo" placeholder="예) 가전 구매, 병원비..."></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 히스토리 -->
+  <div id="section-history" class="section">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-size:18px;font-weight:600">누적 기록</div>
+      <button class="btn" onclick="doExport()">📥 CSV(엑셀) 추출</button>
+    </div>
+    <div class="card">
+      <div class="card-title">월별 수입 / 지출</div>
+      <div class="chart-wrap" style="height:220px"><canvas id="bar-c" role="img" aria-label="월별 수입 지출 바 차트"></canvas></div>
+    </div>
+    <div class="card">
+      <div id="hist-tbl"></div>
+    </div>
+  </div>
+
+  <!-- 고정비 설정 -->
+  <div id="section-settings" class="section">
+    <div style="font-size:18px;font-weight:600;margin-bottom:16px">고정비 설정</div>
+    <div class="card">
+      <div id="set-list"></div>
+      <div class="sec-divider" style="margin-top:16px">새 항목 추가</div>
+      <div class="grid2" style="margin-bottom:0">
+        <div class="form-group" style="margin:0"><label class="form-label">항목명</label><input class="form-input" type="text" id="new-name" placeholder="예) 구독 서비스"></div>
+        <div class="form-group" style="margin:0"><label class="form-label">월 금액</label><input class="form-input" type="number" id="new-amt" placeholder="0"></div>
+      </div>
+      <div style="text-align:right;margin-top:10px"><button class="btn btn-primary" onclick="addFixed()">추가하기</button></div>
+    </div>
+    <div class="total-card">
+      <div class="total-label">월 고정비 합계</div>
+      <div class="total-value" id="set-total">₩0</div>
+    </div>
+  </div>
+
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ════════════════════════════════════════
+   설정 — 여기에 나중에 Client ID를 넣으면 구글 연동 활성화!
+   ════════════════════════════════════════ */
+const CLIENT_ID = 'YOUR_CLIENT_ID_HERE'; // ← 나중에 여기 바꿔줘
+const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
+const DATA_FILE = 'hh_finance_v2.json';
+const FIXED_FILE = 'hh_fixed_v2.json';
+
+const DEFAULT_FIXED = [
+  { name: '인터넷', amount: 19000 },
+  { name: '렌탈 (비데·정수기)', amount: 55280 },
+  { name: '보험', amount: 138140 },
+  { name: 'OTT (넷플·유튜브)', amount: 28400 },
+  { name: '통신비', amount: 83225 },
+  { name: '후원 (샘샘이)', amount: 45000 }
+];
+
+/* ── 상태 ── */
+let token = null;
+let userData = {};
+let fixedItems = [...DEFAULT_FIXED];
+let dataFileId = null;
+let fixedFileId = null;
+let pieChart = null, lineChart = null, barChart = null;
+
+/* ── 유틸 ── */
+const fmt = n => '₩' + Math.round(n || 0).toLocaleString('ko-KR');
+const int = id => parseInt(document.getElementById(id).value) || 0;
+const val = id => document.getElementById(id).value;
+const set = (id, v) => { document.getElementById(id).value = v || ''; };
+const mKey = (y, m) => y + '-' + String(m).padStart(2, '0');
+const fixedSum = () => fixedItems.reduce((s, i) => s + (i.amount || 0), 0);
+
+function toast(msg, ms = 2200) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('on');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('on'), ms);
+}
+
+function syncStatus(ok, txt) {
+  document.getElementById('sync-dot').className = 'sync-dot' + (ok ? '' : ' off');
+  document.getElementById('sync-txt').textContent = txt;
+}
+
+/* ── 탭 전환 ── */
+function goTab(name) {
+  ['dashboard', 'input', 'history', 'settings'].forEach(t => {
+    document.getElementById('tab-' + t).classList.toggle('on', t === name);
+    const s = document.getElementById('section-' + t);
+    if (s) s.classList.toggle('on', t === name);
+  });
+  if (name === 'dashboard') renderDash();
+  if (name === 'history') renderHistory();
+  if (name === 'settings') renderSettings();
+  if (name === 'input') renderInputPage();
+}
+
+/* ── 월 셀렉트 채우기 ── */
+function fillMonthSelects() {
+  const now = new Date();
+  const sels = document.querySelectorAll('#dash-sel, #inp-sel');
+  sels.forEach(sel => {
+    sel.innerHTML = '';
+    for (let y = 2024; y <= now.getFullYear() + 1; y++) {
+      for (let m = 1; m <= 12; m++) {
+        const o = document.createElement('option');
+        o.value = mKey(y, m);
+        o.textContent = y + '년 ' + String(m).padStart(2, '0') + '월';
+        if (y === now.getFullYear() && m === now.getMonth() + 1) o.selected = true;
+        sel.appendChild(o);
+      }
+    }
+  });
+}
+
+/* ── 앱 표시 ── */
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  goTab('dashboard');
+  if (token && token !== 'local') {
+    document.getElementById('hdr-right').innerHTML =
+      '<div class="sync-badge"><div class="sync-dot off" id="sync-dot"></div><span id="sync-txt">연결 중...</span></div>' +
+      '<button class="btn btn-sm" onclick="doExport()">📥 CSV 추출</button>';
+  }
+}
+
+/* ── 구글 로그인 ── */
+function doSignIn() {
+  if (CLIENT_ID === 'YOUR_CLIENT_ID_HERE') { useLocal(); return; }
+  const s = document.createElement('script');
+  s.src = 'https://accounts.google.com/gsi/client';
+  s.onload = () => {
+    const tc = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID, scope: SCOPES,
+      callback: async resp => {
+        if (resp.error) { toast('로그인 실패: ' + resp.error); return; }
+        token = resp.access_token;
+        showApp();
+        await loadFromDrive();
+      }
+    });
+    tc.requestAccessToken();
+  };
+  document.head.appendChild(s);
+}
+
+function useLocal() {
+  token = 'local';
+  try { userData = JSON.parse(localStorage.getItem('hh_data') || '{}'); } catch { userData = {}; }
+  try { const f = JSON.parse(localStorage.getItem('hh_fixed')); if (f) fixedItems = f; } catch {}
+  fillMonthSelects();
+  showApp();
+  syncStatus(false, '로컬 저장 (구글 미연결)');
+}
+
+/* ── 구글 드라이브 API ── */
+async function gFetch(method, url, body) {
+  const r = await fetch(url, {
+    method,
+    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  return r.json();
+}
+
+async function findFileId(name) {
+  const r = await fetch(
+    `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name='${name}'&fields=files(id)`,
+    { headers: { 'Authorization': 'Bearer ' + token } }
+  );
+  const d = await r.json();
+  return d.files && d.files[0] ? d.files[0].id : null;
+}
+
+async function readDriveFile(id) {
+  const r = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`,
+    { headers: { 'Authorization': 'Bearer ' + token } });
+  return r.json();
+}
+
+async function writeDriveFile(id, name, content) {
+  const body = JSON.stringify(content);
+  if (id) {
+    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`, {
+      method: 'PATCH',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body
+    });
+    return id;
+  }
+  const meta = await gFetch('POST',
+    'https://www.googleapis.com/drive/v3/files?fields=id',
+    { name, parents: ['appDataFolder'] }
+  );
+  await fetch(`https://www.googleapis.com/upload/drive/v3/files/${meta.id}?uploadType=media`, {
+    method: 'PATCH',
+    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+    body
+  });
+  return meta.id;
+}
+
+async function loadFromDrive() {
+  syncStatus(false, '불러오는 중...');
+  try {
+    dataFileId = await findFileId(DATA_FILE);
+    if (dataFileId) userData = await readDriveFile(dataFileId);
+    fixedFileId = await findFileId(FIXED_FILE);
+    if (fixedFileId) fixedItems = await readDriveFile(fixedFileId);
+    fillMonthSelects();
+    renderDash();
+    syncStatus(true, '구글 드라이브 연동');
+    toast('데이터 불러왔어! ✓');
+  } catch (e) {
+    syncStatus(false, '오류: ' + e.message);
+  }
+}
+
+async function saveToDrive() {
+  if (token === 'local') {
+    localStorage.setItem('hh_data', JSON.stringify(userData));
+    localStorage.setItem('hh_fixed', JSON.stringify(fixedItems));
+    return;
+  }
+  syncStatus(false, '저장 중...');
+  try {
+    dataFileId = await writeDriveFile(dataFileId, DATA_FILE, userData);
+    fixedFileId = await writeDriveFile(fixedFileId, FIXED_FILE, fixedItems);
+    syncStatus(true, '구글 드라이브 연동');
+  } catch (e) {
+    syncStatus(false, '저장 실패');
+    toast('저장 실패: ' + e.message);
+  }
+}
+
+/* ── 계산 ── */
+function calcMonth(d) {
+  const fixed = fixedSum();
+  const living = (d.livS || 0) + (d.livH || 0) + (d.livC || 0);
+  const totalInc = (d.incS || 0) + (d.incH || 0);
+  const totalExp = fixed + living + (d.manage || 0) + (d.ceremony || 0) +
+    (d.sav || 0) + (d.inst || 0) + (d.travel || 0) + (d.misc || 0);
+  const remain = totalInc - totalExp;
+  const rate = totalInc ? Math.round(remain / totalInc * 100) : 0;
+  return { fixed, living, totalInc, totalExp, remain, rate };
+}
+
+/* ── 대시보드 ── */
+function renderDash() {
+  const key = document.getElementById('dash-sel').value;
+  const d = userData[key];
+  const metricsEl = document.getElementById('dash-metrics');
+
+  if (!d) {
+    metricsEl.innerHTML = `
+      <div class="met"><div class="met-label">총 수입</div><div class="met-value" style="color:var(--text-l);font-size:16px">데이터 없음</div></div>
+      <div class="met"><div class="met-label">총 지출</div><div class="met-value" style="color:var(--text-l);font-size:16px">—</div></div>
+      <div class="met"><div class="met-label">비상금</div><div class="met-value" style="color:var(--text-l);font-size:16px">—</div></div>
+      <div class="met"><div class="met-label">저축률</div><div class="met-value" style="color:var(--text-l);font-size:16px">—</div></div>`;
+    document.getElementById('brows').innerHTML = '<div class="empty"><div class="empty-icon">📝</div>이 달 데이터가 없어요<br>월별 입력 탭에서 추가해줘!</div>';
+    document.getElementById('pie-legend').innerHTML = '';
+    if (pieChart) { pieChart.destroy(); pieChart = null; }
+    renderLineChart();
+    return;
+  }
+
+  const c = calcMonth(d);
+
+  metricsEl.innerHTML = `
+    <div class="met">
+      <div class="met-label">총 수입</div>
+      <div class="met-value b">${fmt(c.totalInc)}</div>
+      <div class="met-sub">소영 ${fmt(d.incS)} + 환희 ${fmt(d.incH)}</div>
+    </div>
+    <div class="met">
+      <div class="met-label">총 지출</div>
+      <div class="met-value r">${fmt(c.totalExp)}</div>
+    </div>
+    <div class="met">
+      <div class="met-label">비상금</div>
+      <div class="met-value ${c.remain >= 0 ? 'g' : 'r'}">${fmt(c.remain)}</div>
+    </div>
+    <div class="met">
+      <div class="met-label">저축률</div>
+      <div class="met-value ${c.rate >= 15 ? 'g' : c.rate >= 0 ? '' : 'r'}">${c.rate}%</div>
+    </div>`;
+
+  const cats =   ['고정비',    '생활비',    '관리비',       '경조사비',      '적금',     '할부',     '여행비',     '기타'];
+  const vals =   [c.fixed,     c.living,    d.manage||0,    d.ceremony||0,   d.sav||0,   d.inst||0,  d.travel||0,  d.misc||0];
+  const colors = ['#378ADD',   '#D85A30',   '#1D9E75',      '#D4537E',       '#534AB7',  '#BA7517',  '#639922',    '#888780'];
+
+  const active = vals.map((v, i) => v > 0 ? i : -1).filter(i => i >= 0);
+
+  document.getElementById('pie-legend').innerHTML = active.map(i =>
+    `<div class="leg-row">
+      <div class="leg-name"><div class="leg-dot" style="background:${colors[i]}"></div>${cats[i]}</div>
+      <div class="leg-amt">${fmt(vals[i])}</div>
+    </div>`
+  ).join('');
+
+  document.getElementById('brows').innerHTML = active.map(i => {
+    const pct = c.totalExp ? Math.round(vals[i] / c.totalExp * 100) : 0;
+    return `<div class="brow">
+      <div class="brow-top"><span class="brow-name">${cats[i]}</span><span class="brow-val">${fmt(vals[i])}<span class="brow-pct">${pct}%</span></span></div>
+      <div class="prog"><div class="pfill" style="width:${pct}%;background:${colors[i]}"></div></div>
+    </div>`;
+  }).join('');
+
+  if (pieChart) pieChart.destroy();
+  pieChart = new Chart(document.getElementById('pie-c'), {
+    type: 'doughnut',
+    data: {
+      labels: active.map(i => cats[i]),
+      datasets: [{ data: active.map(i => vals[i]), backgroundColor: active.map(i => colors[i]), borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' ' + fmt(ctx.raw) } } }
+    }
+  });
+
+  renderLineChart();
+}
+
+function renderLineChart() {
+  const keys = Object.keys(userData).sort();
+  if (!keys.length) { if (lineChart) { lineChart.destroy(); lineChart = null; } return; }
+  const labels = keys.map(k => { const [y, m] = k.split('-'); return `'${y.slice(2)}.${parseInt(m)}`; });
+  const data = keys.map(k => calcMonth(userData[k]).remain);
+  if (lineChart) lineChart.destroy();
+  lineChart = new Chart(document.getElementById('line-c'), {
+    type: 'line',
+    data: { labels, datasets: [{ data, borderColor: '#1D9E75', backgroundColor: 'rgba(29,158,117,.08)', tension: .35, fill: true, pointBackgroundColor: '#1D9E75', pointRadius: 3 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' ' + fmt(ctx.raw) } } },
+      scales: {
+        x: { ticks: { autoSkip: true, maxTicksLimit: 10, font: { size: 11 } } },
+        y: { ticks: { callback: v => fmt(v), font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+/* ── 히스토리 ── */
+function renderHistory() {
+  const keys = Object.keys(userData).sort().reverse();
+  const wrap = document.getElementById('hist-tbl');
+  if (!keys.length) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-icon">📅</div>아직 기록이 없어요!</div>';
+    if (barChart) { barChart.destroy(); barChart = null; }
+    return;
+  }
+  const rows = keys.map(k => {
+    const [y, m] = k.split('-');
+    const c = calcMonth(userData[k]);
+    const d = userData[k];
+    return `<tr>
+      <td style="font-weight:500">${y}년 ${parseInt(m)}월</td>
+      <td style="font-weight:500;color:#185FA5">${fmt(c.totalInc)}</td>
+      <td style="color:var(--red-dark)">${fmt(c.totalExp)}</td>
+      <td><span class="badge ${c.remain >= 0 ? 'badge-g' : 'badge-r'}">${fmt(c.remain)}</span></td>
+      <td style="color:var(--text-m)">${fmt(c.fixed)}</td>
+      <td style="font-size:12px;color:var(--text-l)">${d.memo || ''}</td>
+    </tr>`;
+  }).join('');
+  wrap.innerHTML = `<table class="tbl">
+    <thead><tr><th>월</th><th>수입</th><th>지출</th><th>비상금</th><th>고정비</th><th>메모</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+
+  const sk = keys.slice().reverse();
+  const labels = sk.map(k => { const [y, m] = k.split('-'); return `'${y.slice(2)}.${parseInt(m)}`; });
+  if (barChart) barChart.destroy();
+  barChart = new Chart(document.getElementById('bar-c'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: '수입', data: sk.map(k => calcMonth(userData[k]).totalInc), backgroundColor: '#5DCAA5', borderRadius: 3 },
+        { label: '지출', data: sk.map(k => calcMonth(userData[k]).totalExp), backgroundColor: '#F0997B', borderRadius: 3 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'top', labels: { font: { size: 12 }, boxWidth: 10, padding: 12 } },
+        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmt(ctx.raw) } }
+      },
+      scales: {
+        x: { ticks: { autoSkip: true, maxTicksLimit: 12, font: { size: 11 } } },
+        y: { ticks: { callback: v => fmt(v), font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+/* ── 입력 탭 ── */
+function renderInputPage() {
+  document.getElementById('inp-fixed-chips').innerHTML = fixedItems.map(f =>
+    `<div class="chip"><span class="chip-name">${f.name}</span><span class="chip-amt">${fmt(f.amount)}</span></div>`
+  ).join('');
+  document.getElementById('inp-fixed-total').textContent = fmt(fixedSum());
+}
+
+function previewInc() {
+  const s = int('f-inc-s'), h = int('f-inc-h');
+  document.getElementById('inc-preview').textContent = '합계: ' + fmt(s + h);
+}
+
+function loadMonth() {
+  const key = document.getElementById('inp-sel').value;
+  const d = userData[key] || {};
+  set('f-inc-s', d.incS); set('f-inc-h', d.incH);
+  set('f-liv-s', d.livS); set('f-liv-h', d.livH); set('f-liv-c', d.livC);
+  set('f-manage', d.manage); set('f-ceremony', d.ceremony);
+  set('f-sav', d.sav); set('f-inst', d.inst);
+  set('f-travel', d.travel); set('f-misc', d.misc); set('f-memo', d.memo);
+  previewInc();
+  toast(d.incS ? '기존 데이터 불러왔어!' : '새 달이야. 입력해줘!');
+}
+
+async function saveMonth() {
+  const key = document.getElementById('inp-sel').value;
+  userData[key] = {
+    incS: int('f-inc-s'), incH: int('f-inc-h'),
+    livS: int('f-liv-s'), livH: int('f-liv-h'), livC: int('f-liv-c'),
+    manage: int('f-manage'), ceremony: int('f-ceremony'),
+    sav: int('f-sav'), inst: int('f-inst'),
+    travel: int('f-travel'), misc: int('f-misc'), memo: val('f-memo')
+  };
+  await saveToDrive();
+  toast('저장됐어! ✓');
+}
+
+/* ── 고정비 설정 ── */
+function renderSettings() {
+  document.getElementById('set-total').textContent = fmt(fixedSum());
+  document.getElementById('set-list').innerHTML = fixedItems.map((f, i) =>
+    `<div class="set-row">
+      <span class="set-name">${f.name}</span>
+      <input class="set-input" type="number" value="${f.amount}" onchange="updateFixedAmt(${i}, this.value)">
+      <button class="btn btn-ghost btn-sm" onclick="removeFixed(${i})" style="color:var(--red-dark)">삭제</button>
+    </div>`
+  ).join('');
+}
+
+function updateFixedAmt(i, v) {
+  fixedItems[i].amount = parseInt(v) || 0;
+  document.getElementById('set-total').textContent = fmt(fixedSum());
+  saveToDrive();
+}
+
+function removeFixed(i) {
+  fixedItems.splice(i, 1);
+  renderSettings();
+  saveToDrive();
+  toast('삭제됐어!');
+}
+
+async function addFixed() {
+  const name = document.getElementById('new-name').value.trim();
+  const amount = parseInt(document.getElementById('new-amt').value) || 0;
+  if (!name) { toast('항목명을 입력해줘!'); return; }
+  fixedItems.push({ name, amount });
+  document.getElementById('new-name').value = '';
+  document.getElementById('new-amt').value = '';
+  renderSettings();
+  await saveToDrive();
+  toast('추가됐어!');
+}
+
+/* ── CSV 추출 ── */
+function doExport() {
+  const keys = Object.keys(userData).sort();
+  if (!keys.length) { toast('데이터가 없어!'); return; }
+  const header = ['월', '소영월급', '환희월급', '총수입', '고정비', '생활비', '관리비', '경조사비', '적금', '할부', '여행비', '기타', '비상금', '저축률', '메모'];
+  const rows = keys.map(k => {
+    const d = userData[k]; const c = calcMonth(d);
+    const [y, m] = k.split('-');
+    return [
+      `${y}년 ${parseInt(m)}월`,
+      d.incS || 0, d.incH || 0, c.totalInc,
+      c.fixed, c.living, d.manage || 0, d.ceremony || 0,
+      d.sav || 0, d.inst || 0, d.travel || 0, d.misc || 0,
+      c.remain, c.rate + '%', d.memo || ''
+    ].join(',');
+  });
+  const csv = '\uFEFF' + header.join(',') + '\n' + rows.join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  a.download = '가계부_' + new Date().toISOString().slice(0, 10) + '.csv';
+  a.click();
+  toast('파일 저장됐어!');
+}
+
+/* ── 초기화 ── */
+window.addEventListener('load', () => {
+  fillMonthSelects();
+  if (CLIENT_ID === 'YOUR_CLIENT_ID_HERE') useLocal();
+});
+</script>
+</body>
+</html>

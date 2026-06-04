@@ -355,7 +355,7 @@ select {
 /* ════════════════════════════════════════
    설정 — 여기에 나중에 Client ID를 넣으면 구글 연동 활성화!
    ════════════════════════════════════════ */
-const CLIENT_ID = 'YOUR_CLIENT_ID_HERE'; // ← 나중에 여기 바꿔줘
+const CLIENT_ID = '576383246761-ilp6ktsa7eqn75uacag09peihuvh6s05.apps.googleusercontent.com'; // ← 나중에 여기 바꿔줘
 const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
 const DATA_FILE = 'hh_finance_v2.json';
 const FIXED_FILE = 'hh_fixed_v2.json';
@@ -813,7 +813,7 @@ function doExport() {
 /* ── 초기화 ── */
 window.addEventListener('load', () => {
   fillMonthSelects();
-  if (CLIENT_ID === 'YOUR_CLIENT_ID_HERE') useLocal();
+  if (CLIENT_ID === '576383246761-ilp6ktsa7eqn75uacag09peihuvh6s05.apps.googleusercontent.com') useLocal();
 });
 </script>
 </body>

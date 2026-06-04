@@ -225,21 +225,23 @@ select{padding:5px 10px;border:0.5px solid var(--border);border-radius:7px;font-
       <div style="text-align:right;font-size:12px;color:var(--text-m)">합계: <span id="inp-fixed-total" style="font-weight:600;color:var(--text)">₩0</span></div>
     </div>
 
-    <div class="grid3">
-      <div class="card">
-        <div class="card-title" style="margin-bottom:8px">관리비</div>
-        <div class="form-group" style="margin:0"><label class="form-label">소영</label><input class="form-input money-input" type="text" inputmode="numeric" id="f-manage-s" placeholder="0"></div>
-        <div class="form-group" style="margin-top:8px;margin-bottom:0"><label class="form-label">환희</label><input class="form-input money-input" type="text" inputmode="numeric" id="f-manage-h" placeholder="0"></div>
+    <!-- 관리비/경조사비/여행비 -->
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title">관리비 / 경조사비 / 여행비</div>
+        <button class="btn btn-sm btn-ghost" onclick="addVarRow()">+ 항목 추가</button>
       </div>
-      <div class="card">
-        <div class="card-title" style="margin-bottom:8px">경조사비</div>
-        <div class="form-group" style="margin:0"><label class="form-label">소영</label><input class="form-input money-input" type="text" inputmode="numeric" id="f-ceremony-s" placeholder="0"></div>
-        <div class="form-group" style="margin-top:8px;margin-bottom:0"><label class="form-label">환희</label><input class="form-input money-input" type="text" inputmode="numeric" id="f-ceremony-h" placeholder="0"></div>
+      <div style="display:grid;grid-template-columns:1fr 90px 120px 32px;gap:6px;margin-bottom:6px">
+        <div style="font-size:10px;color:var(--text-l);padding:0 4px">항목 종류</div>
+        <div style="font-size:10px;color:var(--text-l);text-align:center">납입자</div>
+        <div style="font-size:10px;color:var(--text-l);text-align:right;padding:0 4px">금액</div>
+        <div></div>
       </div>
-      <div class="card">
-        <div class="card-title" style="margin-bottom:8px">여행비</div>
-        <div class="form-group" style="margin:0"><label class="form-label">소영</label><input class="form-input money-input" type="text" inputmode="numeric" id="f-travel-s" placeholder="0"></div>
-        <div class="form-group" style="margin-top:8px;margin-bottom:0"><label class="form-label">환희</label><input class="form-input money-input" type="text" inputmode="numeric" id="f-travel-h" placeholder="0"></div>
+      <div id="var-rows"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border)">
+        <div style="font-size:12px;color:var(--text-m)">관리비: <span id="var-manage-total" style="font-weight:600;color:var(--text)">₩0</span></div>
+        <div style="font-size:12px;color:var(--text-m)">경조사비: <span id="var-ceremony-total" style="font-weight:600;color:var(--text)">₩0</span></div>
+        <div style="font-size:12px;color:var(--text-m)">여행비: <span id="var-travel-total" style="font-weight:600;color:var(--text)">₩0</span></div>
       </div>
     </div>
 
@@ -581,21 +583,28 @@ async function saveToDrive(){
 function calcMonth(d){
   const fixedS=fixedSumS(), fixedH=fixedSumH(), fixed=fixedS+fixedH;
   const livS=d.livS||0, livH=d.livH||0, livC=d.livC||0;
-  const manageS=d.manageS||0, manageH=d.manageH||0;
-  const ceremonyS=d.ceremonyS||0, ceremonyH=d.ceremonyH||0;
-  const travelS=d.travelS||0, travelH=d.travelH||0;
   const incS=d.incS||0, incH=d.incH||0;
   const savTotal=d.savRows?d.savRows.reduce((s,r)=>s+(r.amt||0),0):0;
   const instTotal=d.instRows?d.instRows.reduce((s,r)=>s+(r.amt||0),0):0;
   const living=livS+livH+livC;
-  const manage=manageS+manageH, ceremony=ceremonyS+ceremonyH, travel=travelS+travelH;
+
+  // varRows에서 관리비/경조사비/여행비 합산
+  const varRows=d.varRows||[];
+  const manage=varRows.filter(r=>r.type==='관리비').reduce((s,r)=>s+(r.amt||0),0);
+  const ceremony=varRows.filter(r=>r.type==='경조사비').reduce((s,r)=>s+(r.amt||0),0);
+  const travel=varRows.filter(r=>r.type==='여행비').reduce((s,r)=>s+(r.amt||0),0);
+  const manageS=varRows.filter(r=>r.type==='관리비'&&r.who==='소영').reduce((s,r)=>s+(r.amt||0),0);
+  const manageH=varRows.filter(r=>r.type==='관리비'&&r.who==='환희').reduce((s,r)=>s+(r.amt||0),0);
+  const ceremonyS=varRows.filter(r=>r.type==='경조사비'&&r.who==='소영').reduce((s,r)=>s+(r.amt||0),0);
+  const ceremonyH=varRows.filter(r=>r.type==='경조사비'&&r.who==='환희').reduce((s,r)=>s+(r.amt||0),0);
+  const travelS=varRows.filter(r=>r.type==='여행비'&&r.who==='소영').reduce((s,r)=>s+(r.amt||0),0);
+  const travelH=varRows.filter(r=>r.type==='여행비'&&r.who==='환희').reduce((s,r)=>s+(r.amt||0),0);
+
   const totalInc=incS+incH;
   const totalExp=fixed+living+manage+ceremony+savTotal+instTotal+travel+(d.misc||0);
   const remain=totalInc-totalExp;
   const rate=totalInc?Math.round(remain/totalInc*100):0;
 
-  // 각자 공용통장 입금액 계산
-  // 소영: 월급 - (소영 고정비 + 소영 용돈 + 소영 관리비 + 소영 경조사비 + 소영 여행비 + 소영 할부/적금)
   const instS=d.instRows?d.instRows.filter(r=>r.who==='소영').reduce((s,r)=>s+(r.amt||0),0):0;
   const instH=d.instRows?d.instRows.filter(r=>r.who==='환희').reduce((s,r)=>s+(r.amt||0),0):0;
   const savS=d.savRows?d.savRows.filter(r=>r.who==='소영').reduce((s,r)=>s+(r.amt||0),0):0;
@@ -825,6 +834,7 @@ function renderInputPage(){
     `<div class="chip"><span class="chip-name">${f.name} <span style="color:var(--text-l)">${f.who}</span></span><span class="chip-amt">${fmt((f.amtS||0)+(f.amtH||0))}</span></div>`
   ).join('');
   document.getElementById('inp-fixed-total').textContent=fmt(fixedSumAll());
+  if(!document.querySelector('.var-row')) addVarRow();
   if(!document.querySelector('.sav-row')) addSavRow();
   if(!document.querySelector('.inst-row')) addInstRow();
   if(!document.querySelector('.stock-row')) addStockRow();
@@ -852,9 +862,11 @@ function loadMonth(){
   const setTxt=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v||'';};
   setMoney('f-inc-s',d.incS);setMoney('f-inc-h',d.incH);
   setMoney('f-liv-s',d.livS);setMoney('f-liv-h',d.livH);setMoney('f-liv-c',d.livC);
-  setMoney('f-manage-s',d.manageS);setMoney('f-manage-h',d.manageH);
-  setMoney('f-ceremony-s',d.ceremonyS);setMoney('f-ceremony-h',d.ceremonyH);
-  setMoney('f-travel-s',d.travelS);setMoney('f-travel-h',d.travelH);
+  // varRows 복원
+  document.getElementById('var-rows').innerHTML='';
+  if(d.varRows&&d.varRows.length) d.varRows.forEach(r=>addVarRow(r.type,r.who,r.amt));
+  else addVarRow();
+  updateVarTotals();
   setMoney('f-misc',d.misc);setTxt('f-memo',d.memo);
   document.getElementById('sav-rows').innerHTML='';
   if(d.savRows&&d.savRows.length) d.savRows.forEach(r=>addSavRow(r.name,r.who,r.amt,r.total));
@@ -896,18 +908,63 @@ async function saveMonth(){
     const current=parseInt((row.querySelector('.stock-cur').value||'').replace(/[^0-9]/g,''))||0;
     if(name||invested) stockRows.push({name,who,invested,current});
   });
+  // varRows 수집
+  const varRows=[];
+  document.querySelectorAll('.var-row').forEach(row=>{
+    const type=row.querySelector('.var-type').value;
+    const who=row.querySelector('.var-who').value;
+    const amt=parseInt((row.querySelector('.var-amt').value||'').replace(/[^0-9]/g,''))||0;
+    if(amt) varRows.push({type,who,amt});
+  });
+
   userData[key]={
     incS:moneyVal('f-inc-s'),incH:moneyVal('f-inc-h'),
     livS:moneyVal('f-liv-s'),livH:moneyVal('f-liv-h'),livC:moneyVal('f-liv-c'),
-    manageS:moneyVal('f-manage-s'),manageH:moneyVal('f-manage-h'),
-    ceremonyS:moneyVal('f-ceremony-s'),ceremonyH:moneyVal('f-ceremony-h'),
-    travelS:moneyVal('f-travel-s'),travelH:moneyVal('f-travel-h'),
-    savRows,instRows,stockRows,
+    varRows,savRows,instRows,stockRows,
     misc:moneyVal('f-misc'),
     memo:document.getElementById('f-memo').value
   };
   await saveToDrive();
   toast('저장됐어! ✓');
+}
+
+
+/* ── 관리비/경조사비/여행비 행 ── */
+function addVarRow(type='관리비', who='소영', amt=0){
+  const wrap=document.getElementById('var-rows');
+  const div=document.createElement('div');
+  div.className='var-row';
+  div.style.cssText='display:grid;grid-template-columns:1fr 90px 120px 32px;gap:6px;margin-bottom:6px;align-items:center';
+  div.innerHTML=`
+    <select class="form-input var-type" style="font-size:13px;padding:6px 10px" onchange="updateVarTotals()">
+      <option ${type==='관리비'?'selected':''}>관리비</option>
+      <option ${type==='경조사비'?'selected':''}>경조사비</option>
+      <option ${type==='여행비'?'selected':''}>여행비</option>
+    </select>
+    <select class="set-who var-who" style="width:100%" onchange="updateVarTotals()">
+      <option ${who==='소영'?'selected':''}>소영</option>
+      <option ${who==='환희'?'selected':''}>환희</option>
+    </select>
+    <input class="form-input money-input var-amt" type="text" inputmode="numeric" placeholder="0" value="${amt?parseInt(amt).toLocaleString('ko-KR'):''}" style="font-size:13px;padding:6px 10px;text-align:right" oninput="updateVarTotals()">
+    <button class="btn btn-ghost btn-danger" onclick="this.parentElement.remove();updateVarTotals()" style="padding:6px;font-size:14px">✕</button>`;
+  wrap.appendChild(div);
+  setTimeout(initMoneyInputs,10);
+}
+function updateVarTotals(){
+  let manage=0, ceremony=0, travel=0;
+  document.querySelectorAll('.var-row').forEach(row=>{
+    const type=row.querySelector('.var-type').value;
+    const amt=parseInt((row.querySelector('.var-amt').value||'').replace(/[^0-9]/g,''))||0;
+    if(type==='관리비') manage+=amt;
+    else if(type==='경조사비') ceremony+=amt;
+    else if(type==='여행비') travel+=amt;
+  });
+  const m=document.getElementById('var-manage-total');
+  const c=document.getElementById('var-ceremony-total');
+  const t=document.getElementById('var-travel-total');
+  if(m) m.textContent=fmt(manage);
+  if(c) c.textContent=fmt(ceremony);
+  if(t) t.textContent=fmt(travel);
 }
 
 /* ── 적금 행 ── */

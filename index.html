@@ -188,10 +188,6 @@ select{padding:5px 10px;border:0.5px solid var(--border);border-radius:7px;font-
       <div class="grid3" id="dash-stock-content" style="margin-bottom:0"></div>
     </div>
 
-    <div class="card">
-      <div class="card-hdr"><div class="card-title">월별 비상금 추이</div></div>
-      <div class="chart-wrap" style="height:180px"><canvas id="line-c" role="img" aria-label="비상금 추이"></canvas></div>
-    </div>
   </div>
 
   <!-- 월별 입력 -->
@@ -245,7 +241,7 @@ select{padding:5px 10px;border:0.5px solid var(--border);border-radius:7px;font-
         <div style="font-size:12px;color:var(--text-m)">여행비: <span id="var-travel-total" style="font-weight:600;color:var(--text)">₩0</span></div>
       </div>
       <div style="margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border)">
-        <label class="form-label">경조사비 메모</label>
+        <label class="form-label">메모</label>
         <input class="form-input" type="text" id="f-ceremony-memo" placeholder="예) 철수 결혼식 10만, 장례식 5만...">
       </div>
     </div>
@@ -373,6 +369,12 @@ select{padding:5px 10px;border:0.5px solid var(--border);border-radius:7px;font-
       </div>
     </div>
 
+    <!-- 총 자산 월별 추이 -->
+    <div class="card">
+      <div class="card-title" style="margin-bottom:12px">📈 총 자산 월별 추이</div>
+      <div class="chart-wrap" style="height:220px"><canvas id="asset-chart" role="img" aria-label="총 자산 월별 추이"></canvas></div>
+    </div>
+
     <!-- 자산 현황 입력 -->
     <div class="card">
       <div class="card-hdr">
@@ -438,7 +440,7 @@ const DEFAULT_FIXED = [
 
 let token=null, userData={}, fixedItems=[...DEFAULT_FIXED], assetData={};
 let dataFileId=null, fixedFileId=null, assetFileId=null;
-let pieChart=null, lineChart=null, barChart=null;
+let pieChart=null, lineChart=null, barChart=null, assetChart=null;
 
 const fmt = n => '₩'+Math.round(n||0).toLocaleString('ko-KR');
 const mKey = (y,m) => y+'-'+String(m).padStart(2,'0');
@@ -710,21 +712,9 @@ function renderDash(){
     document.getElementById('dash-stock').style.display='none';
   }
 
-  renderLineChart();
 }
 
-function renderLineChart(){
-  const keys=Object.keys(userData).sort();
-  if(!keys.length){if(lineChart){lineChart.destroy();lineChart=null;}return;}
-  const labels=keys.map(k=>{const[y,m]=k.split('-');return`'${y.slice(2)}.${parseInt(m)}`;});
-  const data=keys.map(k=>calcMonth(userData[k]).remain);
-  if(lineChart) lineChart.destroy();
-  lineChart=new Chart(document.getElementById('line-c'),{
-    type:'line',
-    data:{labels,datasets:[{data,borderColor:'#1D9E75',backgroundColor:'rgba(29,158,117,.08)',tension:.35,fill:true,pointBackgroundColor:'#1D9E75',pointRadius:3}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+fmt(ctx.raw)}}},scales:{x:{ticks:{autoSkip:true,maxTicksLimit:10,font:{size:11}}},y:{ticks:{callback:v=>fmt(v),font:{size:11}}}}}
-  });
-}
+
 
 /* ── 히스토리 ── */
 function renderHistory(){
@@ -732,10 +722,10 @@ function renderHistory(){
   const wrap=document.getElementById('hist-tbl');
   if(!keys.length){wrap.innerHTML='<div class="empty">📅 아직 기록이 없어요!</div>';return;}
   wrap.innerHTML=`<table class="tbl">
-    <thead><tr><th>월</th><th>수입</th><th>지출</th><th>비상금</th><th>소영→공용</th><th>환희→공용</th><th>메모</th></tr></thead>
+    <thead><tr><th>월</th><th>수입</th><th>지출</th><th>비상금</th><th>소영→공용</th><th>환희→공용</th></tr></thead>
     <tbody>${keys.map(k=>{
       const[y,m]=k.split('-');const c=calcMonth(userData[k]);const d=userData[k];
-      return`<tr><td style="font-weight:500">${y}년 ${parseInt(m)}월</td><td style="color:var(--blue-d);font-weight:500">${fmt(c.totalInc)}</td><td style="color:var(--red-d)">${fmt(c.totalExp)}</td><td><span class="badge ${c.remain>=0?'badge-g':'badge-r'}">${fmt(c.remain)}</span></td><td style="color:var(--green-d);font-weight:500">${fmt(Math.max(0,c.transferS))}</td><td style="color:var(--green-d);font-weight:500">${fmt(Math.max(0,c.transferH))}</td><td style="font-size:12px;color:var(--text-l)">${d.memo||''}</td></tr>`;
+      return`<tr><td style="font-weight:500">${y}년 ${parseInt(m)}월</td><td style="color:var(--blue-d);font-weight:500">${fmt(c.totalInc)}</td><td style="color:var(--red-d)">${fmt(c.totalExp)}</td><td><span class="badge ${c.remain>=0?'badge-g':'badge-r'}">${fmt(c.remain)}</span></td><td style="color:var(--green-d);font-weight:500">${fmt(Math.max(0,c.transferS))}</td><td style="color:var(--green-d);font-weight:500">${fmt(Math.max(0,c.transferH))}</td></tr>`;
     }).join('')}</tbody>
   </table>`;
 
@@ -800,6 +790,7 @@ function renderAssets(){
 
   // 현금 입력 행
   renderCashRows(key);
+  renderAssetChart();
 }
 
 function renderCashRows(key){
@@ -1129,6 +1120,54 @@ function initMoneyInputs(){
 }
 
 
+
+
+/* ── 총 자산 월별 추이 차트 ── */
+function renderAssetChart(){
+  const canvas=document.getElementById('asset-chart');
+  if(!canvas) return;
+
+  // 월별 총 자산 = 현금 + 주식 평가
+  const keys=Object.keys(userData).sort();
+  if(!keys.length){ if(assetChart){assetChart.destroy();assetChart=null;} return; }
+
+  const labels=keys.map(k=>{const[y,m]=k.split('-');return`'${y.slice(2)}.${parseInt(m)}`;});
+  const totals=keys.map(k=>{
+    const d=userData[k]||{};
+    const ad=assetData[k]||{cashRows:[]};
+    const cash=(ad.cashRows||[]).reduce((s,r)=>s+(r.amt||0),0);
+    const stock=(d.stockRows||[]).reduce((s,r)=>s+(r.current||0),0);
+    return cash+stock;
+  });
+
+  if(assetChart) assetChart.destroy();
+  assetChart=new Chart(canvas,{
+    type:'line',
+    data:{
+      labels,
+      datasets:[{
+        label:'총 자산',
+        data:totals,
+        borderColor:'#1D9E75',
+        backgroundColor:'rgba(29,158,117,.08)',
+        tension:.35, fill:true,
+        pointBackgroundColor:'#1D9E75',
+        pointRadius:4
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>' '+fmt(ctx.raw)}}
+      },
+      scales:{
+        x:{ticks:{autoSkip:true,maxTicksLimit:12,font:{size:11}}},
+        y:{ticks:{callback:v=>fmt(v),font:{size:11}}}
+      }
+    }
+  });
+}
 
 /* ── 현금 항목 삭제 ── */
 async function deleteCashItem(key, idx){

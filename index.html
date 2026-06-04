@@ -1266,6 +1266,7 @@ function moneyVal(id){
 }
 
 function loadMonth(){
+  _autoSaveLocked = true; // 불러오는 동안 자동저장 막기
   const key=document.getElementById('inp-sel').value;
   const d=userData[key]||{};
   const setMoney=(id,v)=>{
@@ -1298,13 +1299,17 @@ function loadMonth(){
 }
 
 let _autoSaveTimer = null;
+let _autoSaveLocked = false;
+
 function autoSave(){
+  if(_autoSaveLocked) return; // 월 전환 중엔 저장 안 함
   clearTimeout(_autoSaveTimer);
   _autoSaveTimer = setTimeout(async () => {
+    if(_autoSaveLocked) return;
     await saveMonth();
     syncStatus(true, '자동저장됨 ✓');
     setTimeout(() => syncStatus(true, '공유 데이터 연동'), 2000);
-  }, 800);
+  }, 1000);
 }
 
 async function saveMonth(){

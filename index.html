@@ -934,10 +934,10 @@ async function sbGet(table, filter=''){
 }
 
 async function sbUpsert(table, data){
-  return sbFetch('POST', table, data, {
-    'Prefer': 'resolution=merge-duplicates,return=representation',
-    'on-conflict': table === 'monthly_data' ? 'month_key' : 
-                   table === 'asset_data' ? 'month_key' : 'id'
+  // PRIMARY KEY 기반 upsert
+  const conflictCol = (table === 'monthly_data' || table === 'asset_data') ? 'month_key' : 'id';
+  return sbFetch('POST', table + '?on_conflict=' + conflictCol, data, {
+    'Prefer': 'resolution=merge-duplicates,return=minimal'
   });
 }
 async function loadFromDrive(){
@@ -974,7 +974,7 @@ async function saveToDrive(target='all'){
       }
     }
     if(target==='fixed' || target==='all'){
-      await sbUpsert('fixed_items', {id: '00000000-0000-0000-0000-000000000001', items: fixedItems, updated_at: new Date().toISOString()});
+      await sbUpsert('fixed_items', {id: 'default', items: fixedItems, updated_at: new Date().toISOString()});
     }
     if(target==='asset' || target==='all'){
       const assetKey = document.getElementById('asset-sel') ? document.getElementById('asset-sel').value : null;

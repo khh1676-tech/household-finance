@@ -935,7 +935,9 @@ async function sbGet(table, filter=''){
 
 async function sbUpsert(table, data){
   return sbFetch('POST', table, data, {
-    'Prefer': 'resolution=merge-duplicates,return=minimal'
+    'Prefer': 'resolution=merge-duplicates,return=representation',
+    'on-conflict': table === 'monthly_data' ? 'month_key' : 
+                   table === 'asset_data' ? 'month_key' : 'id'
   });
 }
 async function loadFromDrive(){

@@ -645,38 +645,6 @@ select:focus { outline: none; border-color: var(--ink); }
       </div>
     </div>
 
-    <!-- 주식 -->
-    <div class="card">
-      <div class="card-hdr">
-        <div class="card-title">주식</div>
-        <button class="btn btn-sm btn-ghost" onclick="addStockRow();setTimeout(autoSave,100)">+ 항목 추가</button>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 100px 130px 130px 32px;gap:6px;margin-bottom:6px">
-        <div style="font-size:10px;color:var(--text-l);padding:0 4px">종목/계좌명</div>
-        <div style="font-size:10px;color:var(--text-l);text-align:center">투자자</div>
-        <div style="font-size:10px;color:var(--text-l);text-align:right;padding:0 4px">누적 총 투자금</div>
-        <div style="font-size:10px;color:var(--text-l);text-align:right;padding:0 4px">현재 평가금액</div>
-        <div></div>
-      </div>
-      <div id="stock-rows"></div>
-      <div id="stock-summary" style="display:none;margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border)">
-        <div class="grid3" style="margin:0">
-          <div style="text-align:center;padding:8px;background:var(--bg);border-radius:7px">
-            <div style="font-size:10px;color:var(--text-m);margin-bottom:3px">누적 총 투자금</div>
-            <div style="font-size:14px;font-weight:600" id="stk-inv">₩0</div>
-          </div>
-          <div style="text-align:center;padding:8px;background:var(--bg);border-radius:7px">
-            <div style="font-size:10px;color:var(--text-m);margin-bottom:3px">총 평가금액</div>
-            <div style="font-size:14px;font-weight:600" id="stk-cur">₩0</div>
-          </div>
-          <div style="text-align:center;padding:8px;background:var(--bg);border-radius:7px">
-            <div style="font-size:10px;color:var(--text-m);margin-bottom:3px">수익률</div>
-            <div style="font-size:14px;font-weight:600" id="stk-rate">0%</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- 특이사항 -->
     <div class="card">
       <div class="card-title" style="margin-bottom:12px">특이사항</div>
@@ -743,7 +711,41 @@ select:focus { outline: none; border-color: var(--ink); }
         <button class="btn btn-sm btn-ghost" onclick="addCashRow()">+ 통장 추가</button>
       </div>
       <div id="cash-rows"></div>
-      <div style="text-align:right;margin-top:8px"><button class="btn btn-primary btn-sm" onclick="saveAssets()">저장</button></div>
+    </div>
+
+    <!-- 주식 입력 -->
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title">주식 입력</div>
+        <button class="btn btn-sm btn-ghost" onclick="addStockRow()">+ 종목 추가</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 100px 130px 130px 32px;gap:6px;margin-bottom:6px">
+        <div style="font-size:10px;color:var(--muted);padding:0 4px">종목/계좌명</div>
+        <div style="font-size:10px;color:var(--muted);text-align:center">투자자</div>
+        <div style="font-size:10px;color:var(--muted);text-align:right;padding:0 4px">누적 총 투자금</div>
+        <div style="font-size:10px;color:var(--muted);text-align:right;padding:0 4px">현재 평가금액</div>
+        <div></div>
+      </div>
+      <div id="stock-rows"></div>
+      <div id="stock-summary" style="display:none;margin-top:8px;padding-top:8px;border-top:0.5px solid var(--hairline)">
+        <div class="grid3" style="margin:0">
+          <div style="text-align:center;padding:8px;background:var(--surface-soft);border-radius:7px">
+            <div style="font-size:10px;color:var(--muted);margin-bottom:3px">누적 총 투자금</div>
+            <div style="font-size:14px;font-weight:600" id="stk-inv">₩0</div>
+          </div>
+          <div style="text-align:center;padding:8px;background:var(--surface-soft);border-radius:7px">
+            <div style="font-size:10px;color:var(--muted);margin-bottom:3px">총 평가금액</div>
+            <div style="font-size:14px;font-weight:600" id="stk-cur">₩0</div>
+          </div>
+          <div style="text-align:center;padding:8px;background:var(--surface-soft);border-radius:7px">
+            <div style="font-size:10px;color:var(--muted);margin-bottom:3px">수익률</div>
+            <div style="font-size:14px;font-weight:600" id="stk-rate">0%</div>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:right;margin-top:12px">
+        <button class="btn btn-primary btn-sm" onclick="saveAssets()">저장</button>
+      </div>
     </div>
   </div>
   <!-- 고정비 설정 -->
@@ -962,7 +964,28 @@ async function loadFromDrive(){
     fillSelects(); renderDash();
     syncStatus(true,'공유 데이터 연동');
     toast('데이터 불러왔어! ✓');
+    await migrateStockToAsset();
   }
+}
+
+/* ── 주식 마이그레이션: monthly_data → asset_data ── */
+async function migrateStockToAsset(){
+  let migrated=false;
+  for(const key of Object.keys(userData)){
+    const d=userData[key];
+    if(!d.stockRows||!d.stockRows.length) continue;
+    const ad=assetData[key]||{cashRows:[]};
+    // asset_data에 주식이 없을 때만 이전
+    if(!ad.stockRows||!ad.stockRows.length){
+      ad.stockRows=d.stockRows;
+      assetData[key]=ad;
+      try{
+        await sbUpsert('asset_data',{month_key:key,data:ad,updated_at:new Date().toISOString()});
+        migrated=true;
+      }catch(e){console.warn('마이그레이션 실패:',key,e);}
+    }
+  }
+  if(migrated) toast('기존 주식 데이터를 자산 현황으로 이전했어! ✓');
 }
 async function saveToDrive(target='all'){
   syncStatus(false,'저장 중...');
@@ -1167,10 +1190,10 @@ function renderHistory(){
 function renderAssets(){
   const key=document.getElementById('asset-sel').value;
   const d=userData[key]||{};
-  const ad=assetData[key]||{cashRows:[]};
+  const ad=assetData[key]||{cashRows:[],stockRows:[]};
 
-  // 주식 (해당 월 최신 평가금액)
-  const stocks=d.stockRows||[];
+  // 주식: asset_data에서 읽기 (없으면 monthly_data 레거시에서 폴백)
+  const stocks=ad.stockRows&&ad.stockRows.length ? ad.stockRows : (d.stockRows||[]);
   let totalCash=0,totalStock=0;
 
   // 현금
@@ -1211,6 +1234,7 @@ function renderAssets(){
 
   // 현금 입력 행
   renderCashRows(key);
+  renderStockRows(key);
   renderAssetChart();
 }
 
@@ -1219,6 +1243,16 @@ function renderCashRows(key){
   const wrap=document.getElementById('cash-rows');
   wrap.innerHTML='';
   (ad.cashRows||[]).forEach((r,i)=>addCashRowData(r.name,r.amt));
+}
+
+function renderStockRows(key){
+  const ad=assetData[key]||{stockRows:[]};
+  const wrap=document.getElementById('stock-rows');
+  if(!wrap) return;
+  wrap.innerHTML='';
+  const rows=ad.stockRows||[];
+  if(rows.length) rows.forEach(r=>addStockRow(r.name,r.who,r.invested,r.current));
+  updateStockSummary();
 }
 
 function addCashRow(){
@@ -1246,7 +1280,15 @@ async function saveAssets(){
     const amt=parseInt((row.querySelector('.cash-amt').value||'').replace(/[^0-9]/g,''))||0;
     if(name||amt) cashRows.push({name,amt});
   });
-  assetData[key]={cashRows};
+  const stockRows=[];
+  document.querySelectorAll('.stock-row').forEach(row=>{
+    const name=row.querySelector('.stock-name').value.trim();
+    const who=row.querySelector('.stock-who').value;
+    const invested=parseInt((row.querySelector('.stock-inv').value||'').replace(/[^0-9]/g,''))||0;
+    const current=parseInt((row.querySelector('.stock-cur').value||'').replace(/[^0-9]/g,''))||0;
+    if(name||invested) stockRows.push({name,who,invested,current});
+  });
+  assetData[key]={cashRows,stockRows};
   await saveToDrive('asset');
   toast('자산 저장됐어! ✓');
   renderAssets();
@@ -1261,7 +1303,6 @@ function renderInputPage(){
   if(!document.querySelector('.var-row')) addVarRow();
   if(!document.querySelector('.sav-row')) addSavRow();
   if(!document.querySelector('.inst-row')) addInstRow();
-  if(!document.querySelector('.stock-row')) addStockRow();
 }
 
 function previewInc(){
@@ -1298,10 +1339,7 @@ function loadMonth(){
   document.getElementById('inst-rows').innerHTML='';
   if(d.instRows&&d.instRows.length) d.instRows.forEach(r=>addInstRow(r.name,r.who,r.amt));
   else addInstRow();
-  document.getElementById('stock-rows').innerHTML='';
-  if(d.stockRows&&d.stockRows.length) d.stockRows.forEach(r=>addStockRow(r.name,r.who,r.invested,r.current));
-  else addStockRow();
-  updateSavTotal();updateInstTotal();updateStockSummary();
+  updateSavTotal();updateInstTotal();
   previewInc();
   setTimeout(initMoneyInputs,50);
   toast(d.incS?'기존 데이터 불러왔어!':'새 달이야. 입력해줘!');
@@ -1348,14 +1386,6 @@ async function saveMonth(){
     const amt=parseInt((row.querySelector('.inst-amt').value||'').replace(/[^0-9]/g,''))||0;
     if(name||amt) instRows.push({name,who,amt});
   });
-  const stockRows=[];
-  document.querySelectorAll('.stock-row').forEach(row=>{
-    const name=row.querySelector('.stock-name').value.trim();
-    const who=row.querySelector('.stock-who').value;
-    const invested=parseInt((row.querySelector('.stock-inv').value||'').replace(/[^0-9]/g,''))||0;
-    const current=parseInt((row.querySelector('.stock-cur').value||'').replace(/[^0-9]/g,''))||0;
-    if(name||invested) stockRows.push({name,who,invested,current});
-  });
   // varRows 수집
   const varRows=[];
   document.querySelectorAll('.var-row').forEach(row=>{
@@ -1368,7 +1398,7 @@ async function saveMonth(){
   userData[key]={
     incS:moneyVal('f-inc-s'),incH:moneyVal('f-inc-h'),
     livS:moneyVal('f-liv-s'),livH:moneyVal('f-liv-h'),livC:moneyVal('f-liv-c'),
-    varRows,savRows,instRows,stockRows,
+    varRows,savRows,instRows,
     misc:moneyVal('f-misc'),
     ceremonyMemo:document.getElementById('f-ceremony-memo').value,
     memo:document.getElementById('f-memo').value
